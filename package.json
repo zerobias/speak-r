@@ -1,0 +1,19 @@
+{
+  "name": "speak-r",
+  "version": "0.0.1",
+  "description": "Functional programming in human-readable form",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/index.js | tnyan"
+  },
+  "keywords": [
+    "fp",
+    "functional",
+    "ramda"
+  ],
+  "author": "Zero Bias",
+  "license": "MIT",
+  "dependencies": {
+    "ramda": "^0.22.1"
+  }
+}

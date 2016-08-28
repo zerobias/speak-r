@@ -1,0 +1,12 @@
+~$*
+*~
+node_modules/
+*.sublime-workspace
+*.sublime-project
+
+.idea/
+.alm/
+.vscode/
+.vs/
+*.sln.iml
+*.7z
