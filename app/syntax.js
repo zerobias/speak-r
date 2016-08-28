@@ -1,6 +1,7 @@
 const syntax = {
   pipe:'|>',
   toLast:'<-',
-  quotes:['"',"'",'`']
+  quotes:['"',"'",'`'],
+  types:['string','number','func','any']
 }
 module.exports = syntax
