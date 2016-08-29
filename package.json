@@ -14,6 +14,7 @@
   "author": "Zero Bias",
   "license": "MIT",
   "dependencies": {
+    "monet": "^0.8.10",
     "ramda": "^0.22.1"
   }
 }
