@@ -1,52 +1,66 @@
 const R = require('ramda')
+const S = require('sanctuary')
 const syntax = require('./syntax.js')
 
-const FabricConstructor = (appInnerTypes)=>{
-  const transformObj = typename=>obj=>{return{type:typename,obj:obj}}
-  const FabricMaker = typelist=>R.zipObj(typelist,R.map(name=>transformObj(name),typelist))
-  return FabricMaker(appInnerTypes)
+const Token = require('./token.js')
+const util = require('./util')
+const isString = util.isString
+const log = util.log('fabric')
+const pipelog = util.pipelog('fabric')
+
+const TokenFabric = (tokenType,condition,transformation)=>{
+  const onCondition = R.pipe( util.arrayify , R.allPass , S.either(R.__,R.F) )
+  const addSteps = R.flip(R.concat)([tokenType,S.Right])
+  const transformUntouched = R.pipe(
+    R.defaultTo([]),
+    util.arrayify,
+    addSteps,
+    util.toPipe,
+    S.either( R.__ , R.identity ))
+  return R.when(onCondition(condition),transformUntouched(transformation))
 }
-const Fabric = FabricConstructor(syntax.types)
-const quoteProcessor = ()=>{
+
+const quoteProcessor = function(){
   const isQuote = R.anyPass( R.map(R.equals,syntax.quotes) )
   const isQuoted = R.allPass(R.map(e=>R.pipe(e,isQuote),[R.head,R.last]))
   const removeQuotes = R.pipe(R.init,R.tail)
-  return R.when(isQuoted,R.pipe(removeQuotes,Fabric.string))
+  return TokenFabric(Token.String,[isString,isQuoted], [R.trim,removeQuotes])
 }
-const operandProcessor = ()=>{
-  const operators = [
-    ['|>','pipe'],
-    ['>|','pipeEnd'],
-    ['<-','intoPrevious'],
-    [',','comma']
-  ]
+const typesProcessor = ()=>{
+  const _types = [
+    ['Array',Array],
+    ['Number',Number],
+    ['String',String],
+    ['Function',Function],
+    ['Object',Object],
+    ['Null',null],
+    ['RegExp',RegExp]]
+  const types = new Map(_types)
+  const isInMap = obj=>isString(obj)
+    ? types.has(obj)
+    : false
+  return TokenFabric(Token.Type,isInMap,e=>types.get(e))
 }
-//const types = ['<-','|>',',']
-//const example ="when <- is Array |> map add 2, , map <- objOf `must` "
 
-const toData = R.objOf('value')
-const mapped = list => func => R.map(func,list)
-let apTypes = mapped(syntax.types)
-let arrow = '<-'
-let comma = ','
-
-const ofString = obj=>R.when(R.is(String),R.of)(obj)
-const splitter = obj=>R.pipe(R.split,R.chain)(obj)
-const reappender = obj=>R.pipe(toData,R.intersperse)(obj)
-const unionAction = obj=>R.pipe( R.when(R.is(String),R.juxt([splitter,reappender])) , R.apply(R.pipe) )(obj)
-
-const symbolAction = symb=>obj=>R.pipe(ofString,unionAction(symb))(obj)
-const symbolListAction = list=>obj=>R.apply(R.pipe,R.map(symbolAction,list))(obj)
-let symbolActions = symbolListAction(syntax.types)
-//symbolActions(example)
-
-//unionAction(comma)(unionAction(arrow)([example]))
-//arrowAction(example)
+const isntModifed = R.propOr(true,'isLeft')
+const isNumber = TokenFabric(Token.Number,isFinite,parseFloat)
 const vendorProcessor = ()=>{
   const isFunc = R.is(Function)
   const isRamda = obj=>isFunc(R[obj])
-  const transformObj = obj=>{return{type:'R',obj:R[obj]}}
-  return R.when(isRamda,transformObj)
+  return TokenFabric(Token.R,[isString,isRamda],R.prop(R.__,R))
 }
-const isVendor = vendorProcessor()
-module.exports = { Fabric,quoteProcessor,operandProcessor,isVendor }
+const contextValidation = str=>R.pipe(R.match(/\D\w+/),R.head,R.equals(str))(str)
+const isContext=TokenFabric(Token.Context,contextValidation)
+
+const preprocess = S.lift(R.when(isString,R.trim))
+const postWarn = R.pipe(R.identity,R.assoc('warning','left-sided value'))
+const postprocess = R.identity
+module.exports = {
+  isQuote:quoteProcessor(),
+  isType:typesProcessor(),
+  isVendor:vendorProcessor(),
+  isNumber,
+  isContext,
+  preprocess,
+  postprocess
+}

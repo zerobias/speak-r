@@ -1,40 +1,49 @@
 const R = require('ramda')
+const S = require('sanctuary')
 
 const fab = require('./fabric.js')
 
 const syntax = require('./syntax.js')
+const tree = require('./tree.js')
+const splitter = require('./splitter.js')
 
-const example ="!> when <- is Array , map <- add 2 map objOf `must`"
+const util = require('./util')
 
-const result = R.pipe(R.when(R.is(Array),R.compose(R.map,R.add(2))),R.map(R.objOf('must')))
+const log = util.log('index')
+const pipelog = util.pipelog('index')
+const singleWordParsing =
+  R.pipe(
+    fab.preprocess,
+    pipelog('->isQuote'),
+    fab.isQuote,
+    pipelog('->isNumber'),
+    fab.isNumber,
+    pipelog('->isType'),
+    fab.isType,
+    pipelog('->isVendor'),
+    fab.isVendor,
+    pipelog('->isContext'),
+    fab.isContext,
+    pipelog('->postprocess'),
+    fab.postprocess)
+const splitKeywords=
+  R.unary(R.pipe(
+    R.unless(util.isString, () => { throw new Error('`keywords` should be String'); }),
 
-
-
-const Fabric = fab.Fabric
-
-const numberProcessing = R.when(isFinite,R.pipe(parseFloat,Fabric.number))
-const quoteProcessing = fab.quoteProcessor()
-
-function splitKeywords(keywords) {
-  return R.unary(R.pipe(
-    R.unless(R.is(String), () => { throw new Error('`keywords` should be String'); }),
-    R.map(fab.operandProcessor),
     R.split(' '),
-    R.map(R.trim),
-    //R.reject(R.isEmpty),
-    R.map(numberProcessing),
-    R.map(quoteProcessing),
-    R.map(fab.isVendor)
-  ))(keywords)
-}
 
-console.log(splitKeywords(example))
-class Speaker {
+    R.reject(R.isEmpty),
+    splitter.exec,
+    R.map(R.ifElse(R.is(Object),S.Right,S.Left)),
+    pipelog('тэг'),
 
-}
-//eRes([3,2,5,1])
+    R.map(singleWordParsing),
+    R.dropRepeatsWith((a,b)=>R.allPass([
+      R.propEq('type','operator'),
+      R.propEq('obj',','),
+      R.eqProps('obj',R.__,b)
+    ])(a))
+  ))
 
-//let quotedString = "'word`"
-//quoteProcessing(quotedString)
 
-module.exports = {}
+module.exports = splitKeywords

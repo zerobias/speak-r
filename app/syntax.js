@@ -2,6 +2,14 @@ const syntax = {
   pipe:'|>',
   toLast:'<-',
   quotes:['"',"'",'`'],
-  types:['string','number','func','R','operand','any']
+  operators:['=>','->',',','<~','<-','_','|>','==','!=','@','::'],
+  op:{
+    doubledots:'::',
+    comma:',',
+    dash:'_',
+    arrow:'->',
+    doublearrow:'=>'
+  },
+  types:['type','R','string','number','operator','any','context']
 }
 module.exports = syntax
