@@ -1,6 +1,7 @@
 ~$*
 *~
 node_modules/
+typings/
 *.sublime-workspace
 *.sublime-project
 
