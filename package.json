@@ -15,14 +15,11 @@
   "author": "Zero Bias",
   "license": "MIT",
   "dependencies": {
-    "bucker": "^1.1.1",
-    "monet": "^0.8.10",
     "ramda": "^0.22.1",
     "sanctuary": "^0.11.1"
   },
   "devDependencies": {
     "debug": "^2.2.0",
-    "tap": "^7.0.0",
     "tap-spec": "^4.1.1",
     "tape": "^4.6.0"
   }
