@@ -1,30 +1,34 @@
 const R = require('ramda')
 const syntax = require('./syntax.js')
 
-let basicContext = new Map()
-basicContext.set('types',['Number','Array','String','Boolean','Object','Function'])
-basicContext.set('R',R)
-basicContext.set('syntax',syntax)
+
 class Context {
-  getter() {
-    return this.cool
+  static get sharedContext() {
+    return R.once(()=>{
+      let basicContext = new Map()
+      basicContext.set('types',
+        ['Number','Array','String','Boolean','Object','Function'])
+      basicContext.set('R',R)
+      basicContext.set('syntax',syntax)
+      return {
+        get:basicContext.get,
+        has:basicContext.has
+      }
+    })()
   }
-  constructor(keyOrDict) {
+  constructor() {
     this._data = new Map()
 
   }
   get(key) {
     return R.cond([
-      [basicContext.has,basicContext.get],
+      [Context.sharedContext.has,Context.sharedContext.get],
       [this._data.has,this._data.get],
       [R.T,null]
     ])(key)
   }
-  set(key) {
-    return R.cond([
-      [this._data.has,this._data.get],
-      [R.T,null]
-    ])(key)
+  set(key,val) {
+    this._data.set(key,val)
   }
   static init(keyOrDict,maybeVal) {
     let miner = new Context()
