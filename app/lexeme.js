@@ -6,11 +6,11 @@ class Lexeme {
       atomic:'AtomicFunc'
     }
   }
-  static Pipe(tokens) {
-    return new Lexeme(Lexeme.types.pipe,{index:tokens[0].index,value:tokens})
+  static Pipe(tokensHList) {
+    return new Lexeme(Lexeme.types.pipe,{index:tokensHList.head.index,value:tokensHList})
   }
-  static AtomicFunc(tokens) {
-    return new Lexeme(Lexeme.types.atomic,{index:tokens[0].index,value:tokens})
+  static AtomicFunc(tokensHList) {
+    return new Lexeme(Lexeme.types.atomic,{index:tokensHList.head.index,value:tokensHList})
   }
   static Context(token) {
     return new Lexeme(Lexeme.types.context,token)

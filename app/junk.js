@@ -31,11 +31,24 @@ class HeadList {
       this.tail = R.tail(rawList)
     } else {
       this.head = head
-      this.tail = rawList
+      this.tail = rawList||[]
     }
   }
   map(func) {
     return R.map(func,this.tail)
+  }
+  append(e) {
+    this.tail.push(e)
+    return this
+  }
+  static hasTail(list) {return R.isEmpty(list.tail)}
+  static last(list) {
+    return HeadList.hasTail(list)
+      ? R.last(list.tail)
+      : list.head
+  }
+  static emptyList() {
+    return new HeadList([{}])
   }
 }
 
