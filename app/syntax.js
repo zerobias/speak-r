@@ -2,14 +2,17 @@ const syntax = {
   pipe:'|>',
   toLast:'<-',
   quotes:['"',"'",'`'],
-  operators:['=>','->',',','<~','<-','_','|>','==','!=','@','::'],
+  operators:['=>','->',',','<~','<-','_','<|>','|>','<|','==','!=','@','::'],
   op:{
     doubledots:'::',
     comma:',',
     dash:'_',
     arrow:'->',
-    doublearrow:'=>'
+    doublearrow:'=>',
+    backpipe:'<|',
+    middlepipe:'<|>',
+    forwardpipe: '|>'
   },
-  types:['type','R','string','number','operator','any','context']
+  types:['type','R','string','number','operator','any','context','lexeme']
 }
 module.exports = syntax
