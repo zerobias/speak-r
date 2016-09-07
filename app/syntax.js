@@ -10,6 +10,6 @@ const syntax = {
     arrow:'->',
     doublearrow:'=>'
   },
-  types:['type','R','string','number','operator','any','context']
+  types:['type','R','string','number','operator','any','context','lexeme']
 }
 module.exports = syntax

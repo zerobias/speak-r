@@ -7,13 +7,15 @@ const log = tag=>mess=>debug(tagvalue(tag,mess))
 const pipelog = tag=>mess=>R.tap(log(tag)(mess))
 
 const consoleOpts = { console:{color:true} }
-// const logmodule = tag=>bucker.createLogger(consoleOpts,tag)
 
-const arrayify = R.when(R.complement(R.is(Array)),R.of)
+const arrayify = R.unless(R.is(Array),R.of)
 
 const toPipe = R.apply(R.pipe)
 
+const pRed = (acc,val)=>R.ifElse(R.is(Array),R.concat(acc),R.append(R.__,acc))(val)
+const P = (...pipes)=>toPipe(R.reduce(pRed,[],pipes))
+
 const isString = R.is(String)
 module.exports = {
-  pipelog,log,isString,arrayify,toPipe
+  pipelog,log,isString,arrayify,toPipe,P
 }
