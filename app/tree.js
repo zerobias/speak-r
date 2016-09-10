@@ -96,7 +96,7 @@ function intoPipes(data) {
     checkSymbol.forwardpipe,
     checkSymbol.middlepipe,
     checkSymbol.backpipe])
-  const isMaster = R.both(R.has('head'),P(prop.head, pipeSymbols))
+  const isMaster = R.both(HeadList.isList,P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
 
   const tr = headSplitter(isMaster,onMaster,changeLast)
@@ -104,7 +104,7 @@ function intoPipes(data) {
 }
 
 function checkReplace(data) {
-  const replacers = [[checkSymbol.dash,types.R,R.__]]
+  const replacers = [[checkSymbol.dash,types.any,R.__]]
 
   const replacer = (type,value)=>e=>{
     e.value = value
@@ -142,43 +142,20 @@ class Print {
   static get typeOrOper() {return R.ifElse(isOperator,prop.val,prop.type)}
   static headList(tag,data,index=0,level=0) {
     const iTag = Print._indexTag(tag)
-    const head = iTag('head')
-    const tail = iTag('tail')
     const padd = '   '
-    const paddLine = '   '
-    const paddStart = '<=='
-    const paddEnd = padd+'+  '
     const joinPadd = P(R.repeat(padd),R.join(''))
-    const keysPrint = key=>iTag(['keys',key])(data[key])
-    const otherKeys = P(R.keys,R.without(['head','tail']),R.map(keysPrint))
-    const objKeys = ['value','index']
-    const listKeys = ['index']
-    const isList = R.has('head')
+    const objKeys = ['value']
     const keyValPrint = padding=>e=>iTag(['  ',joinPadd(level),padding,e[0]],'')(e[1])
-    const isLast = (arr,i)=>i===arr.length-1?paddEnd:paddLine
-    const tokenPrint = keys=>P(R.props(keys),R.zip(keys),arr=>arr.forEach((e,i)=>keyValPrint(paddLine)(e)))
-    // log('')('')
-    // iTag([joinPadd(R.max(0,level-1)),paddLine])('')
-    // if (!isList(data.head))
-    //   tokenPrint(data.head)
-    // else
-
-    // Print.headList()
-    // head(data.head)
-    const isRealIndex = i=>i===-1?'#  ':i+1+((i+1)>10?' ':'  ')
-    if (isList(data)) {
-      keyValPrint(isRealIndex(index))([data.lexeme,''])
-      // log('------head list------')('')
-      tokenPrint(listKeys)(data)
-      // keyValPrint(paddEnd)(['head',''])
-      Print.headList(tag,data.head,-1,R.add(2,level))
-      if (data.tail.length>0) {
-        // keyValPrint(paddEnd)(['tail',data.tail.length])
-        data.tail.forEach((e,i)=>Print.headList(tag,e,i,R.add(2,level)))
-      }
-      // log('      other keys------')('')
+    const tokenPrint = keys=>P(R.props(keys),R.zip(keys),R.forEach(keyValPrint(padd)))
+    const isRealIndex = i=>i===-1?'#  ':i+1+((i+1)>=10?' ':'  ')
+    const nextLevel = R.add(2,level)
+    if (HeadList.isList(data)) {
+      keyValPrint(isRealIndex(index))([data.lexeme,data.index])
+      Print.headList(tag,data.head,-1,nextLevel)
+      if (HeadList.hasTail(data))
+        data.tail.forEach((e,i)=>Print.headList(tag,e,i,nextLevel))
     } else {
-      keyValPrint(isRealIndex(index))([data.type,''])
+      keyValPrint(isRealIndex(index))([data.type,data.index])
       tokenPrint(objKeys)(data)
     }
   }
@@ -198,8 +175,8 @@ Print.arr('just',S.justs(justData))
 Print.arr('atomicList',atomicList)
 Print.arr('pipedList',pipedList)
 Print.arr('until',R.map(HeadList.lastR,pipedList))
-pipedList.forEach((e,i)=>Print.headList('piped',e,i))
 atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
+pipedList.forEach((e,i)=>Print.headList('piped',e,i))
 /*const unJustNested = R.map(S.justs)
 const leftRights = S.either(R.of,unJustNested)
 Print.arr('stageHead noDef',R.map(Print.funcReplace(),leftRights(stageHeader(noDefData))))*/

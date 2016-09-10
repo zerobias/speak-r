@@ -31,6 +31,9 @@ class HeadList {
   static emptyList() {
     return new HeadList([{}])
   }
+  static isList(list) {
+    return R.has('head',list)
+  }
 }
 
 module.exports = HeadList
