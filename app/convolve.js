@@ -51,7 +51,8 @@ function optimise(data) {
   return P(exprToPipe,singlePipeToAtomic)(data)
 }
 function convolve(data) {
-  let i = 0
+  if (!R.is(Array,data)) return S.Left('No array recieved')
+
 
   var result = HeadList.emptyList()
   const appendTo = obj=>e=>obj.append(e)
@@ -70,6 +71,7 @@ function convolve(data) {
     [R.T,R.F]
   ])
   const stConds = R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames))
+  let i = 0
   while(i<data.length) {
     var e = data[i]
     log('e')(e)
@@ -90,7 +92,7 @@ function convolve(data) {
     appendToLast(optimise(e))
     i++
   }
-  return result
+  return P(Lexeme.Pipe,optimise)(result)
 }
 
 module.exports = convolve

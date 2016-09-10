@@ -12,6 +12,7 @@ const syntax = require('./syntax.js')
 const Lexeme = require('./lexeme.js')
 const HeadList = require('./head-list.js')
 const convolve = require('./convolve.js')
+const say = require('./say.js')
 
 const exec = require('./index.js')
 
@@ -21,7 +22,10 @@ const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
 //const __tranducer = P(R.ifElse(P(R.prop('value'),R.propEq('type','R')),P(R.prop('value'),R.of,R.append)),R.map)
-const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map _ identity"
+const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map" // _ identity
+
+const pureExample = "when <| equals 1 not <|> add 10 |> add 100"
+const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
 const propEqVal = R.propEq('value')
 const prop = {
@@ -163,14 +167,14 @@ class Print {
   }
 }
 
-let justData = stringTokenTransform(exampleTrans)
+let justData = stringTokenTransform(pureExample)
 // let noDefData = stringTokenTransform(exampleNoDef)
 
 let atomicList = lexemize(justData)
 let pipedList = intoPipes(atomicList)
 let convolved = convolve(pipedList)
 
-log('example')(exampleTrans)
+log('example')(pureExample)
 // Print.arr('toPrint',R.map(Print.to(Print.pair))(justData))
 Print.arr('just',S.justs(justData))
 // Print.arr('filtered',filterMs(isTokenCat(syntax.type.cats.control))(justData))
@@ -180,7 +184,11 @@ Print.arr('just',S.justs(justData))
 Print.arr('until',R.map(HeadList.lastR,pipedList))
 atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
 pipedList.forEach((e,i)=>Print.headList('piped',e,i))
-convolved.map((e,i)=>Print.headList('conv',e,i))
+Print.headList('conv',convolved,-1)
+let word = say(convolved)
+let res = word(2)
+log('word')(res)
+
 /*const unJustNested = R.map(S.justs)
 const leftRights = S.either(R.of,unJustNested)
 Print.arr('stageHead noDef',R.map(Print.funcReplace(),leftRights(stageHeader(noDefData))))*/
