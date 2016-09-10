@@ -22,11 +22,13 @@ const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const __tranducer = P(R.ifElse(P(R.prop('value'),R.propEq('type','R')),P(R.prop('value'),R.of,R.append)),R.map)
 const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map _"
 
-const propValEq = R.propEq('value')
-const propType = R.prop('type')
-const propVal = R.prop('value')
-const propHead = R.prop('head')
-const isTokenCat = tokenArray=>P(propType,util.isContainOrEq(tokenArray))
+const propEqVal = R.propEq('value')
+const prop = {
+  type:R.prop('type'),
+  val:R.prop('value'),
+  head:R.prop('head')
+}
+const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 const isOperator = isTokenCat(types.operator)
 
 
@@ -35,14 +37,15 @@ const filterMs = func=>P(R.map(filterM(func)),S.justs)
 const indexOf = e => e.isJust ? e.value.index : NaN
 const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
 
-const isSymbol = tokenPred => R.allPass([isOperator, propValEq(tokenPred)])
+//TODO make isSymbol and other work through R.whereEq
+const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
 const checkSymbol = R.map(isSymbol,op)
 
 function stringTokenTransform(data) {
-  const tokenGetter = S.fromMaybe(token.Any(null))
-  const indexPipe = (e,i)=>P(tokenGetter,R.assoc('index',i),S.toMaybe)(e)
+  const indexPipe = (e,i)=>S.lift(R.assoc('index',i))(e)
+  const toStrPipe = (e,i)=>S.lift(o=>Object.defineProperty(o,'toString',{value:function(){return `this \n${this.value}`}}))(e)
   const indexation = list=>list.map(indexPipe)
-  return P(exec,R.map(S.eitherToMaybe),indexation)(data)
+  return P(exec,R.map(S.eitherToMaybe),indexation,list=>list.map(toStrPipe))(data)
 }
 
 function stageHeader(data) {
@@ -81,8 +84,8 @@ function headSplitter(isMaster,onMaster,changeLast) {
 }
 function intoAtomics(data) {
   const changeLast = e=>P(util.arrayify,R.append(e.value))
-  const isMaster = P(propVal,isTokenCat([types.R,types.operator,types.context]))
-  const onMaster = P(propVal,R.of,R.append)
+  const isMaster = P(prop.val,isTokenCat([types.R,types.operator,types.context]))
+  const onMaster = P(prop.val,R.of,R.append)
 
   const tr = headSplitter(isMaster,onMaster,changeLast)
   return tr([],data)
@@ -93,7 +96,7 @@ function intoPipes(data) {
     checkSymbol.forwardpipe,
     checkSymbol.middlepipe,
     checkSymbol.backpipe])
-  const isMaster = R.both(R.has('head'),P(propHead, pipeSymbols))
+  const isMaster = R.both(R.has('head'),P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
 
   const tr = headSplitter(isMaster,onMaster,changeLast)
@@ -116,8 +119,8 @@ function checkReplace(data) {
 }
 
 function lexemize(data) {
-  const detectAtomic = R.when(P(propHead,isTokenCat(types.R)),Lexeme.AtomicFunc)
-  const detectExpr   = R.when(P(propHead,isTokenCat(types.operator)),Lexeme.Expression)
+  const detectAtomic = R.when(P(prop.head,isTokenCat(types.R)),Lexeme.AtomicFunc)
+  const detectExpr   = R.when(P(prop.head,isTokenCat(types.operator)),Lexeme.Expression)
 
   const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
   const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
@@ -125,29 +128,78 @@ function lexemize(data) {
 }
 
 class Print {
-  static arr(tag,arr){
-    return arr.forEach((e,i)=>log([tag,i].join(' '))(e))
+  static _indexTag(tag) {
+    return (e,separ=' ')=>P(util.arrayify,R.prepend(tag),R.join(separ),log)(e)
   }
-  static get funcReplace() {return pipelog('FUNC')(R.when(P(R.last,R.is(Function)),e=>[e[0],'FUNC']))}
+  static arr(tag,arr){
+    let iTag = Print._indexTag(tag)
+    return arr.forEach((e,i)=>iTag(i)(e))
+  }
+  static get funcReplace() {return R.when(P(R.last,R.is(Function)),e=>[e[0],'FUNC'])}
   static get pair(){
     return P(R.toPairs,R.map(Print.funcReplace()))}
   static to(func) {return P(S.maybeToNullable,func)}
-  static get typeOrOper() {return R.ifElse(isOperator,propVal,propType)}
+  static get typeOrOper() {return R.ifElse(isOperator,prop.val,prop.type)}
+  static headList(tag,data,index=0,level=0) {
+    const iTag = Print._indexTag(tag)
+    const head = iTag('head')
+    const tail = iTag('tail')
+    const padd = '   '
+    const paddLine = '   '
+    const paddStart = '<=='
+    const paddEnd = padd+'+  '
+    const joinPadd = P(R.repeat(padd),R.join(''))
+    const keysPrint = key=>iTag(['keys',key])(data[key])
+    const otherKeys = P(R.keys,R.without(['head','tail']),R.map(keysPrint))
+    const objKeys = ['value','index']
+    const listKeys = ['index']
+    const isList = R.has('head')
+    const keyValPrint = padding=>e=>iTag(['  ',joinPadd(level),padding,e[0]],'')(e[1])
+    const isLast = (arr,i)=>i===arr.length-1?paddEnd:paddLine
+    const tokenPrint = keys=>P(R.props(keys),R.zip(keys),arr=>arr.forEach((e,i)=>keyValPrint(paddLine)(e)))
+    // log('')('')
+    // iTag([joinPadd(R.max(0,level-1)),paddLine])('')
+    // if (!isList(data.head))
+    //   tokenPrint(data.head)
+    // else
+
+    // Print.headList()
+    // head(data.head)
+    const isRealIndex = i=>i===-1?'#  ':i+1+((i+1)>10?' ':'  ')
+    if (isList(data)) {
+      keyValPrint(isRealIndex(index))([data.lexeme,''])
+      // log('------head list------')('')
+      tokenPrint(listKeys)(data)
+      // keyValPrint(paddEnd)(['head',''])
+      Print.headList(tag,data.head,-1,R.add(2,level))
+      if (data.tail.length>0) {
+        // keyValPrint(paddEnd)(['tail',data.tail.length])
+        data.tail.forEach((e,i)=>Print.headList(tag,e,i,R.add(2,level)))
+      }
+      // log('      other keys------')('')
+    } else {
+      keyValPrint(isRealIndex(index))([data.type,''])
+      tokenPrint(objKeys)(data)
+    }
+  }
 }
 
 let justData = stringTokenTransform(exampleTrans)
-let noDefData = stringTokenTransform(exampleNoDef)
+// let noDefData = stringTokenTransform(exampleNoDef)
 
 let atomicList = lexemize(justData)
 let pipedList = intoPipes(atomicList)
 
 log('example')(exampleTrans)
 Print.arr('toPrint',R.map(Print.to(Print.pair))(justData))
-Print.arr('filtered',filterMs(isTokenCat(syntax.type.cats.control))(justData))
-Print.arr('atomicList',R.map(Print.funcReplace(),atomicList))
-Print.arr('pipedList',pipedList)
-log('until')(R.map(HeadList.lastR,pipedList))
+Print.arr('just',S.justs(justData))
+// Print.arr('filtered',filterMs(isTokenCat(syntax.type.cats.control))(justData))
 
+Print.arr('atomicList',atomicList)
+Print.arr('pipedList',pipedList)
+Print.arr('until',R.map(HeadList.lastR,pipedList))
+pipedList.forEach((e,i)=>Print.headList('piped',e,i))
+atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
 /*const unJustNested = R.map(S.justs)
 const leftRights = S.either(R.of,unJustNested)
 Print.arr('stageHead noDef',R.map(Print.funcReplace(),leftRights(stageHeader(noDefData))))*/
