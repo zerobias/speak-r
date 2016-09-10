@@ -10,7 +10,7 @@ const pipelog = util.pipelog('tree')
 const token = require('./token.js')
 const syntax = require('./syntax.js')
 const Lexeme = require('./lexeme.js')
-const HeadList = require('./junk.js').HeadList
+const HeadList = require('./head-list.js')
 
 const exec = require('./index.js')
 
@@ -93,31 +93,34 @@ function stageHeader(data) {
 
   return P(findDD,cond,headContextMounter)(data)
 }
-function headSplitter(isMaster,onMaster,onSlave) {
+function headSplitter(isMaster,onMaster,changeLast) {
+  const lensLast = P(R.length,R.dec,R.lensIndex)
+  const onEmpty = e=>R.append(new HeadList(e))
+  const onSlave = e=>list=>R.ifElse(R.isEmpty,
+    onEmpty([e]),
+    R.over(lensLast(list),changeLast(e)))(list)
   const tranducer = R.map(R.ifElse(isMaster,onMaster,onSlave))
   return R.transduce(tranducer,(acc,val)=>val(acc))
 }
 function intoAtomics(data) {
   const changeLast = e=>P(util.arrayify,R.append(e.value))
-  const lensLast = P(R.length,R.dec,R.lensIndex)
   const isMaster = P(propVal,isTokenCat([types.R,types.operator,types.context]))
   const onMaster = P(propVal,R.of,R.append)
-  const onSlave = e=>list=>R.over(lensLast(list),changeLast(e),list)
-  const tr = headSplitter(isMaster,onMaster,onSlave)
+
+  const tr = headSplitter(isMaster,onMaster,changeLast)
   return tr([],data)
 }
 function intoPipes(data) {
   const changeLast = e=>hList=>hList.append(e)
-  const lensLast = P(R.length,R.dec,R.lensIndex)
   const pipeSymbols = R.anyPass([
     checkToken.forwardpipe,
     checkToken.middlepipe,
     checkToken.backpipe])
-  const isMaster = R.both(R.has('head'),P(propHead, pipeSymbols))//propHead,
+  const isMaster = R.both(R.has('head'),P(propHead, pipeSymbols))
   const onMaster = P(R.identity,R.append)
-  const onSlave = e=>list=>R.over(lensLast(list),changeLast(e),list)
-  const tr = headSplitter(isMaster,onMaster,onSlave)
-  return tr([HeadList.emptyList()],data)
+
+  const tr = headSplitter(isMaster,onMaster,changeLast)
+  return tr([],data)
 }
 class Print {
   static arr(tag,arr){
@@ -141,16 +144,19 @@ const replacer = (type,value)=>e=>{
   return e
 }
 const checkReplace = (checker,modificator)=>R.map(R.when(checker,modificator))
-const replaceSlash = checkReplace(checkToken.dash,replacer(types.Any,R.__))//R.map(R.when(checkToken.dash,replacer))
+const replaceSlash = checkReplace(checkToken.dash,replacer(types.any,R.__))//R.map(R.when(checkToken.dash,replacer))
 const checkRepList = [[checkToken.dash,types.R,R.__]]
 const detectAtomic = R.when(P(propHead,isTokenCat(types.R)),Lexeme.AtomicFunc)
+const detectExpr   = R.when(P(propHead,isTokenCat(types.operator)),Lexeme.Expression)
 
 //const detectPipes = R.when(P(propHead,pipeSymbols),Lexeme.Pipe)
 
-let atomicList = R.map(P(e=>new HeadList(e),detectAtomic))(intoAtomics(S.lift(replaceSlash)(justData)))
+let atomicList = R.map(P(e=>new HeadList(e),detectAtomic,detectExpr))(intoAtomics(S.lift(replaceSlash)(justData)))
+log('deprec')(atomicList[0].value)
 let pipedList = intoPipes(atomicList)
 Print.arr('atomicList',R.map(Print.funcReplace(),atomicList))
 Print.arr('pipedList',pipedList)
+log('until')(R.map(HeadList.lastR,pipedList))
 //Print.arr('stageHead noDef',R.map(Print.funcReplace(),leftRights(stageHeader(noDefData))))
 
 
