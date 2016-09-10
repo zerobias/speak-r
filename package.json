@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "nodemon test/index.js -debug | tap-spec",
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "start-tree-debug": "set DEBUG=tree:* & nodemon app/tree.js"
   },
   "keywords": [
     "fp",
