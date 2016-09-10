@@ -11,6 +11,7 @@ const token = require('./token.js')
 const syntax = require('./syntax.js')
 const Lexeme = require('./lexeme.js')
 const HeadList = require('./head-list.js')
+const convolve = require('./convolve.js')
 
 const exec = require('./index.js')
 
@@ -20,7 +21,7 @@ const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
 //const __tranducer = P(R.ifElse(P(R.prop('value'),R.propEq('type','R')),P(R.prop('value'),R.of,R.append)),R.map)
-const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map _"
+const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map _ identity"
 
 const propEqVal = R.propEq('value')
 const prop = {
@@ -75,7 +76,7 @@ function stageHeader(data) {
 }
 function headSplitter(isMaster,onMaster,changeLast) {
   const lensLast = P(R.length,R.dec,R.lensIndex)
-  const onEmpty = e=>R.append(new HeadList([e]))
+  const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
   const onSlave = e=>list=>R.ifElse(R.isEmpty,
     onEmpty(e),
     R.over(lensLast(list),changeLast(e)))(list)
@@ -121,7 +122,8 @@ function checkReplace(data) {
 function lexemize(data) {
   const detectAtomic = R.when(P(prop.head,isTokenCat(types.R)),Lexeme.AtomicFunc)
   const detectExpr   = R.when(P(prop.head,isTokenCat(types.operator)),Lexeme.Expression)
-
+  // const detectOther  =
+  const piping = R.unless(R.has('lexeme'),Lexeme.Pipe)
   const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
   const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
   return lexemizing(data)
@@ -166,17 +168,19 @@ let justData = stringTokenTransform(exampleTrans)
 
 let atomicList = lexemize(justData)
 let pipedList = intoPipes(atomicList)
+let convolved = convolve(pipedList)
 
 log('example')(exampleTrans)
-Print.arr('toPrint',R.map(Print.to(Print.pair))(justData))
+// Print.arr('toPrint',R.map(Print.to(Print.pair))(justData))
 Print.arr('just',S.justs(justData))
 // Print.arr('filtered',filterMs(isTokenCat(syntax.type.cats.control))(justData))
 
-Print.arr('atomicList',atomicList)
-Print.arr('pipedList',pipedList)
+// Print.arr('atomicList',atomicList)
+// Print.arr('pipedList',pipedList)
 Print.arr('until',R.map(HeadList.lastR,pipedList))
 atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
 pipedList.forEach((e,i)=>Print.headList('piped',e,i))
+convolved.map((e,i)=>Print.headList('conv',e,i))
 /*const unJustNested = R.map(S.justs)
 const leftRights = S.either(R.of,unJustNested)
 Print.arr('stageHead noDef',R.map(Print.funcReplace(),leftRights(stageHeader(noDefData))))*/

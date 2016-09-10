@@ -8,7 +8,6 @@ const typeCats = {
   control:[types.operator]
 }
 
-
 const syntax = {
   pipe:'|>',
   toLast:'<-',
