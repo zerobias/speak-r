@@ -1,49 +1,30 @@
 const R = require('ramda')
 const S = require('sanctuary')
 
-const fab = require('./fabric.js')
-
-const syntax = require('./syntax.js')
-const tree = require('./tree.js')
-const splitter = require('./splitter.js')
+const preproc = require('./string-preprocess.js')
+const getTree = require('./tree.js')
+const convolve = require('./convolve.js')
 
 const util = require('./util')
-
+const P = util.P
 const log = util.log('index')
 const pipelog = util.pipelog('index')
-const singleWordParsing =
-  R.pipe(
-    fab.preprocess,
-    pipelog('->isQuote'),
-    fab.isQuote,
-    pipelog('->isNumber'),
-    fab.isNumber,
-    pipelog('->isType'),
-    fab.isType,
-    pipelog('->isVendor'),
-    fab.isVendor,
-    pipelog('->isContext'),
-    fab.isContext,
-    pipelog('->postprocess'),
-    fab.postprocess)
-const splitKeywords=
-  R.unary(R.pipe(
-    R.unless(util.isString, () => { throw new Error('`keywords` should be String'); }),
+const Print = require('./print.js')
+const Say = require('./say.js')
 
-    R.split(' '),
+function say(data) {
+  return P(preproc,getTree,convolve,R.tap(e=>Print.headList('conv',e,-1)), Say)(data)
+}
 
-    R.reject(R.isEmpty),
-    splitter.exec,
-    R.map(R.ifElse(R.is(Object),S.Right,S.Left)),
-    pipelog('тэг'),
+const pureExample = "when <| == 1 not <|> + 10 |> + 100"
+const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
-    R.map(singleWordParsing),
-    R.dropRepeatsWith((a,b)=>R.allPass([
-      R.propEq('type','operator'),
-      R.propEq('obj',','),
-      R.eqProps('obj',R.__,b)
-    ])(a))
-  ))
+// let convolved = say(pureExample)
+log('example')(pureExample)
 
+// Print.headList('conv',convolved,-1)
+let word = say(pureExample)
+let res = word(1)
+log('word')(res)
 
-module.exports = splitKeywords
+module.exports = say
