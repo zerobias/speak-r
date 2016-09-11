@@ -1,5 +1,5 @@
 const R = require('ramda')
-const S = require('sanctuary')
+// const S = require('sanctuary')
 
 const preproc = require('./string-preprocess.js')
 const getTree = require('./tree.js')
@@ -8,7 +8,7 @@ const convolve = require('./convolve.js')
 const util = require('./util')
 const P = util.P
 const log = util.log('index')
-const pipelog = util.pipelog('index')
+// const pipelog = util.pipelog('index')
 const Print = require('./print.js')
 const Say = require('./say.js')
 
@@ -17,7 +17,7 @@ function say(data) {
 }
 
 const pureExample = "when <| == 1 not <|> + 10 |> + 100"
-const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
+// const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
 // let convolved = say(pureExample)
 log('example')(pureExample)
