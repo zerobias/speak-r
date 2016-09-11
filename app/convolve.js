@@ -30,7 +30,7 @@ const actions = {
   parent:-1,
   error:NaN
 }
-const opCond = opVal => R.both(Lexeme.its.expr, P(R.prop('head'),eqOp(opVal)))
+const opCond = opVal => R.both(Lexeme.its.expr, P(util.prop.head,eqOp(opVal)))
 const stateConds = {
   pipe:Lexeme.its.pipe,
   open:opCond(op.backpipe),
@@ -46,50 +46,39 @@ const switches = [
   [NaN,0,1,NaN,0]  // close
 ]
 function optimise(data) {
-  const exprToPipe = R.when(Lexeme.its.expr,P(R.prop('tail'),e=>new HeadList(e), Lexeme.Pipe))
-  const singlePipeToAtomic = R.when(R.both(Lexeme.its.pipe,P(HeadList.hasTail,R.not)),R.prop('head'))
+  const exprToPipe = R.when(Lexeme.its.expr,P(util.prop.tail,e=>new HeadList(e), Lexeme.Pipe))
+  const singlePipeToAtomic = R.when(R.both(Lexeme.its.pipe,P(HeadList.hasTail,R.not)),util.prop.head)
   return P(exprToPipe,singlePipeToAtomic)(data)
+}
+const appendTo = obj=>e=>obj.append(e)
+function Stack() {
+  this.value = []
+  this.push = obj=>this.value.push(appendTo(obj))
+  this.pushLast = result=>this.push(HeadList.lastR(result,true))
+  this.pop = ()=>this.value.pop()
+  this.addToLast = val=>R.last(this.value)(val)
 }
 function convolve(data) {
   if (!R.is(Array,data)) return S.Left('No array recieved')
-
-
   var result = HeadList.emptyList()
-  const appendTo = obj=>e=>obj.append(e)
-  const toResult = appendTo(result)
-  const toLast = e=>(HeadList.lastR(result,true)).append(e)
-  var stack = []
-  const stackIn = obj=>stack.push(appendTo(obj))
-  const stackInLast = ()=>stackIn(HeadList.lastR(result,true))
-  const stackOut = ()=>stack.pop()
-  const appendToLast = val=>R.last(stack)(val)
-  let appender = toResult
-  var state = states.empty
-  const cond = R.cond([
-    [stateConds.pipe,toResult],
-    [stateConds.open,toLast],
-    [R.T,R.F]
-  ])
+  let stack = new Stack()
+  let state = states.empty
   const stConds = R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames))
   let i = 0
   while(i<data.length) {
     var e = data[i]
-    log('e')(e)
     let nextState = R.cond(stConds)(e)
-    log('state before')(state)
-    log('nextState')(nextState)
     let doAction = switches[state][nextState]
     switch(doAction) {
       case actions.child:
-        stackInLast()
+        stack.pushLast(result)
         break
       case actions.parent:
-        stackOut()
+        stack.pop()
         break
     }
     state = nextState
-    log('state')(state)
-    appendToLast(optimise(e))
+    stack.addToLast(optimise(e))
     i++
   }
   return P(Lexeme.Pipe,optimise)(result)

@@ -6,15 +6,17 @@ const util = require('./util')
 const P = util.P
 const log = util.log('tree')
 const pipelog = util.pipelog('tree')
+const prop = util.prop
 
 const token = require('./token.js')
 const syntax = require('./syntax.js')
 const Lexeme = require('./lexeme.js')
 const HeadList = require('./head-list.js')
-const convolve = require('./convolve.js')
-const say = require('./say.js')
 
-const exec = require('./index.js')
+
+
+
+// const exec = require('./index.js')
 
 const op = syntax.op
 const types = syntax.type.dict
@@ -24,15 +26,8 @@ const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const __tranducer = P(R.ifElse(P(R.prop('value'),R.propEq('type','R')),P(R.prop('value'),R.of,R.append)),R.map)
 const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map" // _ identity
 
-const pureExample = "when <| equals 1 not <|> add 10 |> add 100"
-const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
-
 const propEqVal = R.propEq('value')
-const prop = {
-  type:R.prop('type'),
-  val:R.prop('value'),
-  head:R.prop('head')
-}
+
 const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 const isOperator = isTokenCat(types.operator)
 
@@ -48,9 +43,8 @@ const checkSymbol = R.map(isSymbol,op)
 
 function stringTokenTransform(data) {
   const indexPipe = (e,i)=>S.lift(R.assoc('index',i))(e)
-  const toStrPipe = (e,i)=>S.lift(o=>Object.defineProperty(o,'toString',{value:function(){return `this \n${this.value}`}}))(e)
   const indexation = list=>list.map(indexPipe)
-  return P(exec,R.map(S.eitherToMaybe),indexation,list=>list.map(toStrPipe))(data)
+  return P(R.map(S.eitherToMaybe),indexation)(data)
 }
 
 function stageHeader(data) {
@@ -109,7 +103,13 @@ function intoPipes(data) {
 }
 
 function checkReplace(data) {
-  const replacers = [[checkSymbol.dash,types.any,R.__]]
+  const replacers = [
+    [checkSymbol.dash,types.any,R.__],
+    [checkSymbol.equals,types.R,R.equals],
+    [checkSymbol.plus,types.R,R.add],
+    [checkSymbol.minus,types.R,R.subtract],
+    [checkSymbol.map,types.R,R.map]
+  ]
 
   const replacer = (type,value)=>e=>{
     e.value = value
@@ -126,72 +126,31 @@ function checkReplace(data) {
 function lexemize(data) {
   const detectAtomic = R.when(P(prop.head,isTokenCat(types.R)),Lexeme.AtomicFunc)
   const detectExpr   = R.when(P(prop.head,isTokenCat(types.operator)),Lexeme.Expression)
-  // const detectOther  =
   const piping = R.unless(R.has('lexeme'),Lexeme.Pipe)
   const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
   const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
   return lexemizing(data)
 }
 
-class Print {
-  static _indexTag(tag) {
-    return (e,separ=' ')=>P(util.arrayify,R.prepend(tag),R.join(separ),log)(e)
-  }
-  static arr(tag,arr){
-    let iTag = Print._indexTag(tag)
-    return arr.forEach((e,i)=>iTag(i)(e))
-  }
-  static get funcReplace() {return R.when(P(R.last,R.is(Function)),e=>[e[0],'FUNC'])}
-  static get pair(){
-    return P(R.toPairs,R.map(Print.funcReplace()))}
-  static to(func) {return P(S.maybeToNullable,func)}
-  static get typeOrOper() {return R.ifElse(isOperator,prop.val,prop.type)}
-  static headList(tag,data,index=0,level=0) {
-    const iTag = Print._indexTag(tag)
-    const padd = '   '
-    const joinPadd = P(R.repeat(padd),R.join(''))
-    const objKeys = ['value']
-    const keyValPrint = padding=>e=>iTag(['  ',joinPadd(level),padding,e[0]],'')(e[1])
-    const tokenPrint = keys=>P(R.props(keys),R.zip(keys),R.forEach(keyValPrint(padd)))
-    const isRealIndex = i=>i===-1?'#  ':i+1+((i+1)>=10?' ':'  ')
-    const nextLevel = R.add(2,level)
-    if (HeadList.isList(data)) {
-      keyValPrint(isRealIndex(index))([data.lexeme,data.index])
-      Print.headList(tag,data.head,-1,nextLevel)
-      if (HeadList.hasTail(data))
-        data.tail.forEach((e,i)=>Print.headList(tag,e,i,nextLevel))
-    } else {
-      keyValPrint(isRealIndex(index))([data.type,data.index])
-      tokenPrint(objKeys)(data)
-    }
-  }
+function getSyntaxTree(data) {
+  return P(stringTokenTransform,lexemize,intoPipes)(data)
 }
 
-let justData = stringTokenTransform(pureExample)
+
 // let noDefData = stringTokenTransform(exampleNoDef)
 
-let atomicList = lexemize(justData)
-let pipedList = intoPipes(atomicList)
-let convolved = convolve(pipedList)
+// let atomicList = lexemize(justData)
+// let pipedList = intoPipes(atomicList)
+// let convolved = convolve(pipedList)
 
-log('example')(pureExample)
+
 // Print.arr('toPrint',R.map(Print.to(Print.pair))(justData))
-Print.arr('just',S.justs(justData))
+
 // Print.arr('filtered',filterMs(isTokenCat(syntax.type.cats.control))(justData))
 
-// Print.arr('atomicList',atomicList)
-// Print.arr('pipedList',pipedList)
-Print.arr('until',R.map(HeadList.lastR,pipedList))
-atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
-pipedList.forEach((e,i)=>Print.headList('piped',e,i))
-Print.headList('conv',convolved,-1)
-let word = say(convolved)
-let res = word(2)
-log('word')(res)
-
-/*const unJustNested = R.map(S.justs)
-const leftRights = S.either(R.of,unJustNested)
-Print.arr('stageHead noDef',R.map(Print.funcReplace(),leftRights(stageHeader(noDefData))))*/
+// atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
+// pipedList.forEach((e,i)=>Print.headList('piped',e,i))
 
 
-module.exports = log
+
+module.exports = getSyntaxTree

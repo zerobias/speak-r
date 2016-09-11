@@ -17,6 +17,13 @@ const arrayify = R.unless(R.is(Array),R.of)
 const isContainOrEq = P(arrayify,R.flip(R.contains))
 
 const isString = R.is(String)
+
+const prop = {
+  type:R.prop('type'),
+  val:R.prop('value'),
+  head:R.prop('head'),
+  tail:R.prop('tail')
+}
 module.exports = {
-  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq
+  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop
 }

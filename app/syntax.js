@@ -12,7 +12,7 @@ const syntax = {
   pipe:'|>',
   toLast:'<-',
   quotes:['"',"'",'`'],
-  operators:['=>','->',',','<~','<-','_','<|>','|>','<|','==','!=','@','::'],
+  operators:['=>','->',',','<~','<-','_','<|>','|>','<|','==','+','-','^','!=','@','::'],
   op:{
     doubledots:'::',
     comma:',',
@@ -21,7 +21,11 @@ const syntax = {
     doublearrow:'=>',
     backpipe:'<|',
     middlepipe:'<|>',
-    forwardpipe: '|>'
+    forwardpipe: '|>',
+    equals:'==',
+    plus:'+',
+    minus:'-',
+    map:'^'
   },
   type:{
     list:types,

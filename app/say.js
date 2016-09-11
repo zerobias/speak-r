@@ -13,7 +13,7 @@ function CompileException(obj) {
 function collectData(obj) {
   const collect = R.cond([
     [R.is(Array),sayPipe],
-    [P(HeadList.isList,R.not),R.prop('value')],
+    [P(HeadList.isList,R.not),util.prop.val],
     [Lexeme.its.pipe,sayPipe],
     [Lexeme.its.atomic,sayAtomic],
     [R.T,e=>{throw new CompileException(e)}]

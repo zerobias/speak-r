@@ -13,7 +13,6 @@ class ILexeme {
   constructor(typename,obj) {
     obj.index = obj.head.index
     obj.lexeme = typename
-    // obj.type = 'lexeme'
     return obj
   }
 }
