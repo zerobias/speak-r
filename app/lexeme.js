@@ -1,6 +1,6 @@
 const R = require('ramda')
 
-const HeadList = require('./head-list.js')
+// const HeadList = require('./head-list.js')
 
 const lexemeTypes = {
   pipe:'Pipe',

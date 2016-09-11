@@ -4,11 +4,11 @@ const S = require('sanctuary')
 const util = require('./util')
 
 const P = util.P
-const log = util.log('tree')
-const pipelog = util.pipelog('tree')
+// const log = util.log('tree')
+// const pipelog = util.pipelog('tree')
 const prop = util.prop
 
-const token = require('./token.js')
+// const token = require('./token.js')
 const syntax = require('./syntax.js')
 const Lexeme = require('./lexeme.js')
 const HeadList = require('./head-list.js')
@@ -20,11 +20,11 @@ const HeadList = require('./head-list.js')
 
 const op = syntax.op
 const types = syntax.type.dict
-const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
-const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
+// const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
+// const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
 //const __tranducer = P(R.ifElse(P(R.prop('value'),R.propEq('type','R')),P(R.prop('value'),R.of,R.append)),R.map)
-const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map" // _ identity
+// const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map" // _ identity
 
 const propEqVal = R.propEq('value')
 
@@ -32,10 +32,10 @@ const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 const isOperator = isTokenCat(types.operator)
 
 
-const filterM = func=>e=>e.filter(func)
-const filterMs = func=>P(R.map(filterM(func)),S.justs)
-const indexOf = e => e.isJust ? e.value.index : NaN
-const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
+// const filterM = func=>e=>e.filter(func)
+// const filterMs = func=>P(R.map(filterM(func)),S.justs)
+// const indexOf = e => e.isJust ? e.value.index : NaN
+// const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
 
 //TODO make isSymbol and other work through R.whereEq
 const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
@@ -47,31 +47,31 @@ function stringTokenTransform(data) {
   return P(R.map(S.eitherToMaybe),indexation)(data)
 }
 
-function stageHeader(data) {
-  const errorFabric = text=>()=>S.Left(text)
-  const err = R.map(errorFabric,{
-    nothing:'Nothing finded',
-    many:'Find more than one ::',
-    other:'Undefined error'
-  })
-  const findDD = filterMs(checkSymbol.doubledots)
-  const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
-  const indexChanger = P(R.lensIndex,R.over)
-  const over = {
-    head:indexChanger(0),
-    body:indexChanger(1)
-  }
-  const headChange = P(filterMs(isTokenCat(types.context)),R.map(P(Lexeme.Context,S.Maybe.of)))
-  const headContextMounter = S.either(S.Left,P(over.head(headChange),over.body(R.tail),S.Right))
-  const cond = R.cond([
-    [R.isEmpty,err.nothing],
-    [e=>R.gt(R.length(e),1),err.many],
-    [e=>R.equals(R.length(e),1),split],
-    [R.T,err.other]
-  ])
+// function stageHeader(data) {
+//   const errorFabric = text=>()=>S.Left(text)
+//   const err = R.map(errorFabric,{
+//     nothing:'Nothing finded',
+//     many:'Find more than one ::',
+//     other:'Undefined error'
+//   })
+//   const findDD = filterMs(checkSymbol.doubledots)
+//   const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
+//   const indexChanger = P(R.lensIndex,R.over)
+//   const over = {
+//     head:indexChanger(0),
+//     body:indexChanger(1)
+//   }
+//   const headChange = P(filterMs(isTokenCat(types.context)),R.map(P(Lexeme.Context,S.Maybe.of)))
+//   const headContextMounter = S.either(S.Left,P(over.head(headChange),over.body(R.tail),S.Right))
+//   const cond = R.cond([
+//     [R.isEmpty,err.nothing],
+//     [e=>R.gt(R.length(e),1),err.many],
+//     [e=>R.equals(R.length(e),1),split],
+//     [R.T,err.other]
+//   ])
 
-  return P(findDD,cond,headContextMounter)(data)
-}
+//   return P(findDD,cond,headContextMounter)(data)
+// }
 function headSplitter(isMaster,onMaster,changeLast) {
   const lensLast = P(R.length,R.dec,R.lensIndex)
   const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
@@ -126,7 +126,7 @@ function checkReplace(data) {
 function lexemize(data) {
   const detectAtomic = R.when(P(prop.head,isTokenCat(types.R)),Lexeme.AtomicFunc)
   const detectExpr   = R.when(P(prop.head,isTokenCat(types.operator)),Lexeme.Expression)
-  const piping = R.unless(R.has('lexeme'),Lexeme.Pipe)
+  // const piping = R.unless(R.has('lexeme'),Lexeme.Pipe)
   const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
   const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
   return lexemizing(data)

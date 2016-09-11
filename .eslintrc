@@ -8,14 +8,14 @@
   "extends": "eslint:recommended",
   "parserOptions": {
     "ecmaVersion": 7,
-    "sourceType": "script"
+    "sourceType": "module"
   },
   "globals": {},
   "rules": {
     "no-console": 0,
-    "no-unused-vars": "off",
-    "no-redeclare": "off",
-    "no-undef": "off",
+    "no-unused-vars": "warn",
+    "no-redeclare": "warn",
+    "no-undef": "error",
     "indent": [
       "warn",
       2,

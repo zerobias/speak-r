@@ -1,6 +1,6 @@
 const R = require('ramda')
 const util = require('./util')
-const S = require('sanctuary')
+// const S = require('sanctuary')
 
 const Token = require('./token.js')
 const log = util.pipelog('splitter')
