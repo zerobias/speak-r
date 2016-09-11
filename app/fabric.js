@@ -5,8 +5,8 @@ const syntax = require('./syntax.js')
 const Token = require('./token.js')
 const util = require('./util')
 const isString = util.isString
-const log = util.log('fabric')
-const pipelog = util.pipelog('fabric')
+// const log = util.log('fabric')
+// const pipelog = util.pipelog('fabric')
 
 const TokenFabric = (tokenType, condition, transformation) => {
   const onCondition = R.pipe(util.arrayify, R.allPass, S.either(R.__, R.F))
@@ -40,7 +40,6 @@ const typesProcessor = () => {
   return TokenFabric(Token.Type, isInMap, e => types.get(e))
 }
 
-const isntModifed = R.propOr(true, 'isLeft')
 const isNumber = TokenFabric(Token.Number, isFinite, parseFloat)
 const vendorProcessor = () => {
   const isFunc = R.is(Function)
@@ -51,7 +50,6 @@ const contextValidation = str => R.pipe(R.match(/\D\w+/), R.head, R.equals(str))
 const isContext = TokenFabric(Token.Context, contextValidation)
 
 const preprocess = S.lift(R.when(isString, R.trim))
-const postWarn = R.pipe(R.identity, R.assoc('warning', 'left-sided value'))
 const postprocess = R.identity
 module.exports = {
   isQuote: quoteProcessor(),

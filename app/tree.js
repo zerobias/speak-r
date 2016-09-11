@@ -5,7 +5,7 @@ const util = require('./util')
 
 const P = util.P
 // const log = util.log('tree')
-// const pipelog = util.pipelog('tree')
+const pipelog = util.pipelog('tree')
 const prop = util.prop
 
 // const token = require('./token.js')
@@ -32,8 +32,8 @@ const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 const isOperator = isTokenCat(types.operator)
 
 
-// const filterM = func=>e=>e.filter(func)
-// const filterMs = func=>P(R.map(filterM(func)),S.justs)
+const filterM = func=>e=>e.filter(func)
+const filterMs = func=>P(R.map(filterM(func)),S.justs)
 // const indexOf = e => e.isJust ? e.value.index : NaN
 // const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
 
@@ -47,31 +47,37 @@ function stringTokenTransform(data) {
   return P(R.map(S.eitherToMaybe),indexation)(data)
 }
 
-// function stageHeader(data) {
-//   const errorFabric = text=>()=>S.Left(text)
-//   const err = R.map(errorFabric,{
-//     nothing:'Nothing finded',
-//     many:'Find more than one ::',
-//     other:'Undefined error'
-//   })
-//   const findDD = filterMs(checkSymbol.doubledots)
-//   const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
-//   const indexChanger = P(R.lensIndex,R.over)
-//   const over = {
-//     head:indexChanger(0),
-//     body:indexChanger(1)
-//   }
-//   const headChange = P(filterMs(isTokenCat(types.context)),R.map(P(Lexeme.Context,S.Maybe.of)))
-//   const headContextMounter = S.either(S.Left,P(over.head(headChange),over.body(R.tail),S.Right))
-//   const cond = R.cond([
-//     [R.isEmpty,err.nothing],
-//     [e=>R.gt(R.length(e),1),err.many],
-//     [e=>R.equals(R.length(e),1),split],
-//     [R.T,err.other]
-//   ])
+function stageHeader(data) {
+  const errorFabric = text=>()=>S.Left(text)
+  const err = R.map(errorFabric,{
+    nothing:'Nothing finded',
+    many:'Find more than one ::',
+    other:'Undefined error'
+  })
+  const findDD = filterMs(checkSymbol.doubledots)
+  const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
+  const indexChanger = P(R.lensIndex,R.over)
+  const over = {
+    head:indexChanger(0),
+    body:indexChanger(1)
+  }
+  const headChange = P(filterMs(isTokenCat(types.context)),R.map(P(Lexeme.Context,S.Maybe.of)))
+  const headContextMounter = S.either(S.Left,P(over.head(headChange),over.body(R.tail),S.Right))
+  const cond = R.cond([
+    [R.isEmpty,err.nothing],
+    [e=>R.gt(R.length(e),1),err.many],
+    [e=>R.equals(R.length(e),1),split],
+    [R.T,err.other]
+  ])
 
-//   return P(findDD,cond,headContextMounter)(data)
-// }
+  return P(findDD,cond,headContextMounter)(data)
+}
+function detectContext(data) {
+  const filt = filterMs(checkSymbol.doubledots)//x=>R.whereEq({value:"data"},x))
+  let dd = P(filt,R.head,R.indexOf(R.__,data),R.splitAt(R.__,data),R.adjust(R.tail,1))(data)
+
+  return data
+}
 function headSplitter(isMaster,onMaster,changeLast) {
   const lensLast = P(R.length,R.dec,R.lensIndex)
   const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
@@ -133,7 +139,7 @@ function lexemize(data) {
 }
 
 function getSyntaxTree(data) {
-  return P(stringTokenTransform,lexemize,intoPipes)(data)
+  return P(stringTokenTransform,detectContext,pipelog('lexemize<-'),lexemize,pipelog('intoPipes'),intoPipes)(data)
 }
 
 

@@ -1,9 +1,9 @@
 const R = require('ramda')
 const tap = require('tape')
-const debug = require('debug')('splitter test')
+// const debug = require('debug')('splitter test')
 var tested
 
-const example ="prepend => take 2 -> equals 'word' apply => ifElse"
+const example ="prepend <| take 2 <|> equals 'word' |> apply <| ifElse"
 
 tap(`splitter is function`, function (t) {
   t.doesNotThrow(tested.exec,tested.exec)
@@ -12,7 +12,7 @@ tap(`splitter is function`, function (t) {
   t.ok(execResult,execResult)
   t.equal(R.is(Array,execResult),true)
   // t.equal(R.all(R.is(String))(execResult),true)
-  t.equal(execResult.length,7,execResult)
+  t.equal(execResult.length,9,execResult)
   t.end()
 })
 module.exports = _tested =>tested=_tested

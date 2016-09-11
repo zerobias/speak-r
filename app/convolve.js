@@ -37,6 +37,7 @@ const stateConds = {
   mid:opCond(op.middlepipe),
   close:opCond(op.forwardpipe)
 }
+const stConds = R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames))
 
 const switches = [
   [NaN,1,1,NaN,1], // empty
@@ -63,7 +64,6 @@ function convolve(data) {
   var result = HeadList.emptyList()
   let stack = new Stack()
   let state = states.empty
-  const stConds = R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames))
   let i = 0
   while(i<data.length) {
     var e = data[i]

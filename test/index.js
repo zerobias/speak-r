@@ -1,8 +1,8 @@
 const R = require('ramda')
 
-const log = R.tap(console.log)
+// const log = R.tap(console.log)
 
-const tagLog = (...words)=>obj=>R.tap(R.pipe(R.flip(R.append)(words),R.apply(console.log)))(obj)
+const tagLog = (...words)=>R.tap(R.pipe(R.flip(R.append)(words),R.apply(console.log)))
 const pipeA = R.pipe(R.apply(R.pipe),R.map)
 const trans = funcs=>R.transduce(pipeA(funcs), R.flip(R.append), [])
 
@@ -21,7 +21,7 @@ const arrowPipes = [
   R.pipe(testName,loaders[1],tagLog('after loaders[1]'))
 ]
 
-const onCond = (cond,vars)=>R.apply(R.ifElse(cond),vars)
+// const onCond = (cond,vars)=>R.apply(R.ifElse(cond),vars)
 
 const isArrow = R.pipe(R.take(2),R.equals('|>'))
 

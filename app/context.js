@@ -43,4 +43,4 @@ class Context {
   }
 }
 
-module.exports = { FabricConstructor,quoteProcessor }
+module.exports = Context
