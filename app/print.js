@@ -5,7 +5,7 @@ const util = require('./util')
 
 const P = util.P
 const log = util.log('tree')
-const pipelog = util.pipelog('tree')
+// const pipelog = util.pipelog('tree')
 
 const HeadList = require('./head-list.js')
 
@@ -21,7 +21,7 @@ class Print {
   static get pair(){
     return P(R.toPairs,R.map(Print.funcReplace()))}
   static to(func) {return P(S.maybeToNullable,func)}
-  static get typeOrOper() {return R.ifElse(isOperator,prop.val,prop.type)}
+  // static get typeOrOper() {return R.ifElse(isOperator,prop.val,prop.type)}
   static headList(tag,data,index=0,level=0) {
     const iTag = Print._indexTag(tag)
     const padd = '   '

@@ -28,14 +28,14 @@ const actions = {
   parent:-1,
   error:NaN
 }
-// const opCond = opVal => R.both(Lexeme.its.expr, P(util.prop.head,eqOp(opVal)))
+const opCond = opVal => R.both(Lexeme.its.expr, P(util.prop.head,opVal))
 const stateConds = {
   pipe:Lexeme.its.pipe,
-  open:eqOp.backpipe,
-  mid:eqOp.middlepipe,
-  close:eqOp.forwardpipe
+  open:opCond(eqOp.backpipe),
+  mid:opCond(eqOp.middlepipe),
+  close:opCond(eqOp.forwardpipe)
 }
-const stConds = R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames))
+const stConds = R.cond(R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames)))
 
 const switches = [
   [NaN,1,1,NaN,1], // empty
@@ -65,7 +65,7 @@ function convolve(data) {
   let i = 0
   while(i<data.length) {
     var e = data[i]
-    let nextState = R.cond(stConds)(e)
+    let nextState = stConds(e)
     let doAction = switches[state][nextState]
     switch(doAction) {
       case actions.child:
