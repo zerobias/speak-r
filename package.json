@@ -1,6 +1,6 @@
 {
   "name": "speak-r",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Functional programming in human-readable form",
   "main": "dist/speak-r.js",
   "jsnext:main": "dist/speak-r.jsnext.js",

@@ -28,9 +28,9 @@ const targets = {
 export default {
   entry: 'app/index.js',
   globals: {
-    "ramda": true,
-    "sanctuary": true,
-    "debug": true
+    "ramda": "R",
+    "sanctuary": "sanctuary",
+    "debug": "debug"
   },
   plugins: [
     nodeResolve({
@@ -38,7 +38,7 @@ export default {
       main: false,
       module: true,
       skip: true,
-      preferBuiltins: true
+      preferBuiltins: false
     }),
     commonjs({
       include: ['app/**'],
