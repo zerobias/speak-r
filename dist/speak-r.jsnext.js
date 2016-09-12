@@ -1,6 +1,6 @@
-import require$$2 from 'ramda';
-import sanctuary from 'sanctuary';
+import require$$3 from 'ramda';
 import debug from 'debug';
+import sanctuary from 'sanctuary';
 
 function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
@@ -55,7 +55,7 @@ module.exports = {op,types,quotes,categories,jstypes,lexemeTypes}
 });
 
 var token = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const TokenFabric = R.curry((category,obj)=>{
   return /*new Token(category,obj)*/{
     type:category,
@@ -74,7 +74,7 @@ module.exports = {
 });
 
 var ramdaPiped = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const def = (func,obj)=>prop=>
   Object.defineProperty(obj,prop[0],{
     get:function(){
@@ -107,7 +107,7 @@ module.exports = RP
 });
 
 var util = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const debug$$1 = debug
 const RP = ramdaPiped
 const tagvalue = (tag,mess)=>R.isNil(mess) ? tag : [tag,mess].join(':  ')
@@ -119,6 +119,9 @@ const P = (...pipes)=>toPipe(R.reduce(pRed,[],pipes))
 const arrayify = R.unless(R.is(Array),R.of)
 const isContainOrEq = P(arrayify,R.flip(R.contains))
 const isString = R.is(String)
+const {create, env} = sanctuary;
+const checkTypes = false
+const S = create({checkTypes: checkTypes, env: env})
 const prop = {
   type:R.prop('type'),
   val:R.prop('value'),
@@ -126,16 +129,16 @@ const prop = {
   tail:R.prop('tail')
 }
 module.exports = {
-  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop,RP
+  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop,RP,S
 }
 });
 
 var fabric = createCommonjsModule(function (module) {
-const R = require$$2
-const S = sanctuary
+const R = require$$3
 const syntax$$1 = syntax
 const Token = token
 const util$$1 = util
+const S = util$$1.S
 const isString = util$$1.isString
 const TokenFabric = (tokenType, condition, transformation) => {
   const onCondition = R.pipe(util$$1.arrayify, R.allPass, S.either(R.__, R.F))
@@ -181,7 +184,7 @@ module.exports = {
 });
 
 var splitter = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const util$$1 = util
 const Token = token
 const log = util$$1.pipelog('splitter')
@@ -225,11 +228,11 @@ module.exports = {exec,cleaner}
 });
 
 var stringPreprocess = createCommonjsModule(function (module) {
-const R = require$$2
-const S = sanctuary
+const R = require$$3
 const fab = fabric
 const splitter$$1 = splitter
 const util$$1 = util
+const S = util$$1.S
 const pipelog = util$$1.pipelog('preproc')
 const singleWordParsing =
   R.pipe(
@@ -265,7 +268,7 @@ module.exports = splitKeywords
 });
 
 var lexeme = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const lexemeTypes = syntax.lexemeTypes
 class ILexeme {
   constructor(typename,obj) {
@@ -296,9 +299,9 @@ module.exports = Lexeme
 });
 
 var headList = createCommonjsModule(function (module) {
-const R = require$$2
-const S = sanctuary
+const R = require$$3
 const util$$1 = util
+const S = util$$1.S
 const P = util$$1.P
 class HeadList {
   constructor(rawList, head) {
@@ -350,7 +353,7 @@ module.exports = HeadList
 });
 
 var tooling = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const util$$1 = util
 const P = util$$1.P
 const syntax$$1 = syntax
@@ -395,9 +398,9 @@ module.exports = {eq,equals}
 });
 
 var tree = createCommonjsModule(function (module) {
-const R = require$$2
-const S = sanctuary
+const R = require$$3
 const util$$1 = util
+const S = util$$1.S
 const P = util$$1.P
 const RP = util$$1.RP
 const pipelog = util$$1.pipelog('tree')
@@ -472,9 +475,9 @@ module.exports = getSyntaxTree
 });
 
 var convolve = createCommonjsModule(function (module) {
-const R = require$$2
-const S = sanctuary
+const R = require$$3
 const util$$1 = util
+const S = util$$1.S
 const P = util$$1.P
 const log = util$$1.log('tree')
 const pipelog = util$$1.pipelog('tree')
@@ -552,7 +555,7 @@ module.exports = convolve
 });
 
 var say = createCommonjsModule(function (module) {
-const R = require$$2
+const R = require$$3
 const HeadList = headList
 const Lexeme = lexeme
 const util$$1 = util

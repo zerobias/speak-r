@@ -1,7 +1,7 @@
 const R = require('ramda')
-const S = require('sanctuary')
 
 const util = require('./util')
+const S = util.S
 
 const P = util.P
 const log = util.log('tree')

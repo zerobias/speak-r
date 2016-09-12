@@ -1,10 +1,11 @@
 const R = require('ramda')
-const S = require('sanctuary')
 const syntax = require('./lang/syntax')
 
 
 const Token = require('./token.js')
 const util = require('./util')
+const S = util.S
+
 const isString = util.isString
 // const log = util.log('fabric')
 // const pipelog = util.pipelog('fabric')

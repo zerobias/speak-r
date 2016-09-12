@@ -17,6 +17,12 @@ const isContainOrEq = P(arrayify,R.flip(R.contains))
 
 const isString = R.is(String)
 
+
+const {create, env} = require('sanctuary');
+
+const checkTypes = false//process.env.NODE_ENV !== 'production';
+const S = create({checkTypes: checkTypes, env: env})
+
 const prop = {
   type:R.prop('type'),
   val:R.prop('value'),
@@ -24,5 +30,5 @@ const prop = {
   tail:R.prop('tail')
 }
 module.exports = {
-  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop,RP
+  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop,RP,S
 }

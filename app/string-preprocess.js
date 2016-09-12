@@ -1,11 +1,11 @@
 const R = require('ramda')
-const S = require('sanctuary')
 
 const fab = require('./fabric.js')
 
 const splitter = require('./splitter.js')
 
 const util = require('./util')
+const S = util.S
 
 const pipelog = util.pipelog('preproc')
 const singleWordParsing =
