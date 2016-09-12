@@ -4,6 +4,7 @@ const S = require('sanctuary')
 const util = require('./util')
 
 const P = util.P
+const RP = util.RP
 // const log = util.log('tree')
 const pipelog = util.pipelog('tree')
 const prop = util.prop
@@ -20,6 +21,8 @@ const HeadList = require('./head-list.js')
 
 const op = syntax.op
 const types = syntax.type.dict
+const tool = require('./lang/tooling')
+const eq = tool.equals
 // const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 // const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
@@ -38,8 +41,8 @@ const filterMs = func=>P(R.map(filterM(func)),S.justs)
 // const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
 
 //TODO make isSymbol and other work through R.whereEq
-const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
-const checkSymbol = R.map(isSymbol,op)
+// const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
+// const eq.op = R.map(isSymbol,op)
 
 function stringTokenTransform(data) {
   const indexPipe = (e,i)=>S.lift(R.assoc('index',i))(e)
@@ -54,9 +57,9 @@ function stageHeader(data) {
     many:'Find more than one ::',
     other:'Undefined error'
   })
-  const findDD = filterMs(checkSymbol.doubledots)
+  const findDD = filterMs(eq.op.doubledots)
   const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
-  const indexChanger = P(R.lensIndex,R.over)
+  const indexChanger = RP.do.lensIndex.over.exec
   const over = {
     head:indexChanger(0),
     body:indexChanger(1)
@@ -73,13 +76,13 @@ function stageHeader(data) {
   return P(findDD,cond,headContextMounter)(data)
 }
 function detectContext(data) {
-  const filt = filterMs(checkSymbol.doubledots)//x=>R.whereEq({value:"data"},x))
-  let dd = P(filt,R.head,R.indexOf(R.__,data),R.splitAt(R.__,data),R.adjust(R.tail,1))(data)
+  const filt = filterMs(eq.op.doubledots())//x=>R.whereEq({value:"data"},x))
+  let dd = P(filt,RP.do.head.indexOf(R.__,data).splitAt(R.__,data).adjust(R.tail,1).exec)(data)
 
   return data
 }
 function headSplitter(isMaster,onMaster,changeLast) {
-  const lensLast = P(R.length,R.dec,R.lensIndex)
+  const lensLast = RP.do.length.dec.lensIndex.exec
   const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
   const onSlave = e=>list=>R.ifElse(R.isEmpty,
     onEmpty(e),
@@ -89,7 +92,7 @@ function headSplitter(isMaster,onMaster,changeLast) {
 }
 function intoAtomics(data) {
   const changeLast = e=>P(util.arrayify,R.append(e.value))
-  const isMaster = P(prop.val,isTokenCat([types.R,types.operator,types.context]))
+  const isMaster = P(prop.val,eq.type.R.op.context)
   const onMaster = P(prop.val,R.of,R.append)
 
   const tr = headSplitter(isMaster,onMaster,changeLast)
@@ -97,10 +100,7 @@ function intoAtomics(data) {
 }
 function intoPipes(data) {
   const changeLast = e=>hList=>hList.append(e)
-  const pipeSymbols = R.anyPass([
-    checkSymbol.forwardpipe,
-    checkSymbol.middlepipe,
-    checkSymbol.backpipe])
+  const pipeSymbols = eq.op.forwardpipe.middlepipe.backpipe
   const isMaster = R.both(HeadList.isList,P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
 
@@ -110,11 +110,11 @@ function intoPipes(data) {
 
 function checkReplace(data) {
   const replacers = [
-    [checkSymbol.dash,types.any,R.__],
-    [checkSymbol.equals,types.R,R.equals],
-    [checkSymbol.plus,types.R,R.add],
-    [checkSymbol.minus,types.R,R.subtract],
-    [checkSymbol.map,types.R,R.map]
+    [eq.op.dash(),types.any,R.__],
+    [eq.op.equals(),types.R,R.equals],
+    [eq.op.plus(),types.R,R.add],
+    [eq.op.minus(),types.R,R.subtract],
+    [eq.op.map(),types.R,R.map]
   ]
 
   const replacer = (type,value)=>e=>{

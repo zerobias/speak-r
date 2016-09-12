@@ -1,6 +1,8 @@
 const R = require('ramda')
 const debug = require('debug')
 
+const RP = require('./ramda-piped')
+
 const tagvalue = (tag,mess)=>R.isNil(mess) ? tag : [tag,mess].join(':  ')
 const log = tag=>mess=>debug(tagvalue(tag,mess))
 const pipelog = tag=>mess=>R.tap(log(tag)(mess))
@@ -22,5 +24,5 @@ const prop = {
   tail:R.prop('tail')
 }
 module.exports = {
-  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop
+  pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop,RP
 }
