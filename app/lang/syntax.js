@@ -36,5 +36,10 @@ const categories = {
   inserted:[types.number,types.string,types.type,types.any],
   control:[types.op]
 }
-
-module.exports = {op,types,quotes,categories,jstypes}
+const lexemeTypes = {
+  pipe:'Pipe',
+  context:'Context',
+  atomic:'AtomicFunc',
+  expr:'Expression'
+}
+module.exports = {op,types,quotes,categories,jstypes,lexemeTypes}

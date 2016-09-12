@@ -1,6 +1,7 @@
 const R = require('ramda')
 const S = require('sanctuary')
-const syntax = require('./syntax.js')
+const syntax = require('./lang/syntax')
+
 
 const Token = require('./token.js')
 const util = require('./util')
@@ -27,15 +28,7 @@ const quoteProcessor = function () {
   return TokenFabric(Token.String, [isString, isQuoted], [R.trim, removeQuotes])
 }
 const typesProcessor = () => {
-  const _types = [
-    ['Array', Array],
-    ['Number', Number],
-    ['String', String],
-    ['Function', Function],
-    ['Object', Object],
-    ['Null', null],
-    ['RegExp', RegExp]]
-  const types = new Map(_types)
+  const types = new Map(syntax.jstypes)
   const isInMap = obj => isString(obj) ? types.has(obj) : false
   return TokenFabric(Token.Type, isInMap, e => types.get(e))
 }

@@ -1,13 +1,6 @@
 const R = require('ramda')
 
-// const HeadList = require('./head-list.js')
-
-const lexemeTypes = {
-  pipe:'Pipe',
-  context:'Context',
-  atomic:'AtomicFunc',
-  expr:'Expression'
-}
+const lexemeTypes = require('./lang/syntax').lexemeTypes
 
 class ILexeme {
   constructor(typename,obj) {
@@ -32,21 +25,6 @@ class Lexeme {
   }
   static Context(token) {
     return new Lexeme(lexemeTypes.context,token)
-  }
-  constructor(typename,obj) {
-    console.error('\n!!!!!!------------Used deprecated Lexeme object!\n')
-    this.lexeme = typename
-    this.index = obj.index
-    this._value = obj.value
-    this.type = 'lexeme'
-  }
-  get value() {
-    console.error('\n!!!!!!------------Used deprecated get method!\n')
-    return this._value
-  }
-  set value(val) {
-    console.error('\n!!!!!!------------Used deprecated set method!\n')
-    this._value = val
   }
 }
 
