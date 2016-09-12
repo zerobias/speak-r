@@ -1,12 +1,13 @@
 const R = require('ramda')
 const S = require('sanctuary')
-const syntax = require('./syntax.js')
+const syntax = require('./lang/syntax')
+
 
 const Token = require('./token.js')
 const util = require('./util')
 const isString = util.isString
-const log = util.log('fabric')
-const pipelog = util.pipelog('fabric')
+// const log = util.log('fabric')
+// const pipelog = util.pipelog('fabric')
 
 const TokenFabric = (tokenType, condition, transformation) => {
   const onCondition = R.pipe(util.arrayify, R.allPass, S.either(R.__, R.F))
@@ -27,20 +28,11 @@ const quoteProcessor = function () {
   return TokenFabric(Token.String, [isString, isQuoted], [R.trim, removeQuotes])
 }
 const typesProcessor = () => {
-  const _types = [
-    ['Array', Array],
-    ['Number', Number],
-    ['String', String],
-    ['Function', Function],
-    ['Object', Object],
-    ['Null', null],
-    ['RegExp', RegExp]]
-  const types = new Map(_types)
+  const types = new Map(syntax.jstypes)
   const isInMap = obj => isString(obj) ? types.has(obj) : false
   return TokenFabric(Token.Type, isInMap, e => types.get(e))
 }
 
-const isntModifed = R.propOr(true, 'isLeft')
 const isNumber = TokenFabric(Token.Number, isFinite, parseFloat)
 const vendorProcessor = () => {
   const isFunc = R.is(Function)
@@ -51,7 +43,6 @@ const contextValidation = str => R.pipe(R.match(/\D\w+/), R.head, R.equals(str))
 const isContext = TokenFabric(Token.Context, contextValidation)
 
 const preprocess = S.lift(R.when(isString, R.trim))
-const postWarn = R.pipe(R.identity, R.assoc('warning', 'left-sided value'))
 const postprocess = R.identity
 module.exports = {
   isQuote: quoteProcessor(),

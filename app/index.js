@@ -16,7 +16,8 @@ function say(data) {
   return P(preproc,getTree,convolve,R.tap(e=>Print.headList('conv',e,-1)), Say)(data)
 }
 
-const pureExample = "when <| == 1 not <|> + 10 |> + 100"
+const pureExample = "data sright :: head prop 'index' splitAt _ @data sright"
+//"when <| == 1 not <|> + 10 |> + 100"
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
 // let convolved = say(pureExample)

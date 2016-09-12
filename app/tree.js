@@ -4,32 +4,24 @@ const S = require('sanctuary')
 const util = require('./util')
 
 const P = util.P
+const RP = util.RP
 // const log = util.log('tree')
-// const pipelog = util.pipelog('tree')
+const pipelog = util.pipelog('tree')
 const prop = util.prop
 
-// const token = require('./token.js')
-const syntax = require('./syntax.js')
 const Lexeme = require('./lexeme.js')
 const HeadList = require('./head-list.js')
 
-
-
-
-// const exec = require('./index.js')
-
-const op = syntax.op
-const types = syntax.type.dict
+const types = require('./lang/syntax').types
+const tool = require('./lang/tooling')
+const eq = tool.equals
 // const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 // const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
 //const __tranducer = P(R.ifElse(P(R.prop('value'),R.propEq('type','R')),P(R.prop('value'),R.of,R.append)),R.map)
 // const exampleTrans = "ifElse <| prop 'value' propEq 'type' 'R' <|> prop 'value' of append |> map" // _ identity
 
-const propEqVal = R.propEq('value')
-
-const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
-const isOperator = isTokenCat(types.operator)
+// const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 
 
 // const filterM = func=>e=>e.filter(func)
@@ -38,8 +30,8 @@ const isOperator = isTokenCat(types.operator)
 // const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
 
 //TODO make isSymbol and other work through R.whereEq
-const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
-const checkSymbol = R.map(isSymbol,op)
+// const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
+// const eq.op = R.map(isSymbol,op)
 
 function stringTokenTransform(data) {
   const indexPipe = (e,i)=>S.lift(R.assoc('index',i))(e)
@@ -54,9 +46,9 @@ function stringTokenTransform(data) {
 //     many:'Find more than one ::',
 //     other:'Undefined error'
 //   })
-//   const findDD = filterMs(checkSymbol.doubledots)
+//   const findDD = filterMs(eq.op.doubledots)
 //   const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
-//   const indexChanger = P(R.lensIndex,R.over)
+//   const indexChanger = RP.do.lensIndex.over.exec
 //   const over = {
 //     head:indexChanger(0),
 //     body:indexChanger(1)
@@ -72,8 +64,13 @@ function stringTokenTransform(data) {
 
 //   return P(findDD,cond,headContextMounter)(data)
 // }
+function detectContext(data) {
+  // const filt = filterMs(eq.op.doubledots())//x=>R.whereEq({value:"data"},x))
+  // let dd = P(filt,RP.do.head.indexOf(R.__,data).splitAt(R.__,data).adjust(R.tail,1).exec)(data)
+  return data
+}
 function headSplitter(isMaster,onMaster,changeLast) {
-  const lensLast = P(R.length,R.dec,R.lensIndex)
+  const lensLast = RP.do.length.dec.lensIndex.exec
   const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
   const onSlave = e=>list=>R.ifElse(R.isEmpty,
     onEmpty(e),
@@ -83,7 +80,7 @@ function headSplitter(isMaster,onMaster,changeLast) {
 }
 function intoAtomics(data) {
   const changeLast = e=>P(util.arrayify,R.append(e.value))
-  const isMaster = P(prop.val,isTokenCat([types.R,types.operator,types.context]))
+  const isMaster = P(prop.val,eq.type.R.op.context)
   const onMaster = P(prop.val,R.of,R.append)
 
   const tr = headSplitter(isMaster,onMaster,changeLast)
@@ -91,10 +88,7 @@ function intoAtomics(data) {
 }
 function intoPipes(data) {
   const changeLast = e=>hList=>hList.append(e)
-  const pipeSymbols = R.anyPass([
-    checkSymbol.forwardpipe,
-    checkSymbol.middlepipe,
-    checkSymbol.backpipe])
+  const pipeSymbols = eq.op.forwardpipe.middlepipe.backpipe
   const isMaster = R.both(HeadList.isList,P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
 
@@ -104,11 +98,11 @@ function intoPipes(data) {
 
 function checkReplace(data) {
   const replacers = [
-    [checkSymbol.dash,types.any,R.__],
-    [checkSymbol.equals,types.R,R.equals],
-    [checkSymbol.plus,types.R,R.add],
-    [checkSymbol.minus,types.R,R.subtract],
-    [checkSymbol.map,types.R,R.map]
+    [eq.op.dash,types.any,R.__],
+    [eq.op.equals,types.R,R.equals],
+    [eq.op.plus,types.R,R.add],
+    [eq.op.minus,types.R,R.subtract],
+    [eq.op.map,types.R,R.map]
   ]
 
   const replacer = (type,value)=>e=>{
@@ -124,33 +118,15 @@ function checkReplace(data) {
 }
 
 function lexemize(data) {
-  const detectAtomic = R.when(P(prop.head,isTokenCat(types.R)),Lexeme.AtomicFunc)
-  const detectExpr   = R.when(P(prop.head,isTokenCat(types.operator)),Lexeme.Expression)
-  // const piping = R.unless(R.has('lexeme'),Lexeme.Pipe)
+  const detectAtomic = R.when(P(prop.head,eq.type.R),Lexeme.AtomicFunc)
+  const detectExpr   = R.when(P(prop.head,eq.type.op),Lexeme.Expression)
   const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
   const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
   return lexemizing(data)
 }
 
 function getSyntaxTree(data) {
-  return P(stringTokenTransform,lexemize,intoPipes)(data)
+  return P(stringTokenTransform,detectContext,pipelog('lexemize<-'),lexemize,pipelog('intoPipes'),intoPipes)(data)
 }
-
-
-// let noDefData = stringTokenTransform(exampleNoDef)
-
-// let atomicList = lexemize(justData)
-// let pipedList = intoPipes(atomicList)
-// let convolved = convolve(pipedList)
-
-
-// Print.arr('toPrint',R.map(Print.to(Print.pair))(justData))
-
-// Print.arr('filtered',filterMs(isTokenCat(syntax.type.cats.control))(justData))
-
-// atomicList.forEach((e,i)=>Print.headList('atomic',e,i))
-// pipedList.forEach((e,i)=>Print.headList('piped',e,i))
-
-
 
 module.exports = getSyntaxTree

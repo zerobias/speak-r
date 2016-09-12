@@ -3,13 +3,10 @@ const S = require('sanctuary')
 
 const fab = require('./fabric.js')
 
-const syntax = require('./syntax.js')
-const tree = require('./tree.js')
 const splitter = require('./splitter.js')
 
 const util = require('./util')
 
-const log = util.log('preproc')
 const pipelog = util.pipelog('preproc')
 const singleWordParsing =
   R.pipe(

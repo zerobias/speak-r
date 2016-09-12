@@ -14,12 +14,13 @@ const targets = {
   es5:[{
     dest: pkg['main'],
     format: 'umd',
-    moduleName: 'speak-r',
+    moduleName: 'speaker',
     sourceMap: true
   }],
   esnext:[{
     dest: pkg['jsnext:main'],
     format: 'es',
+    moduleName: 'speaker',
     sourceMap: true
   }]
 }
