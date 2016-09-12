@@ -9,13 +9,11 @@ const pipelog = util.pipelog('tree')
 
 const HeadList = require('./head-list.js')
 const Lexeme = require('./lexeme.js')
-const syntax = require('./syntax.js')
 
-const types = syntax.type.dict
-const op = syntax.op
-const eq = type=>val=>R.whereEq({type:type,value:val})
+const tool = require('./lang/tooling')
 
-const eqOp = eq(types.operator)
+
+const eqOp = tool.eq.op
 const stateNames = ['pipe','open','mid','close']
 const states = {
   empty:0,
@@ -30,12 +28,12 @@ const actions = {
   parent:-1,
   error:NaN
 }
-const opCond = opVal => R.both(Lexeme.its.expr, P(util.prop.head,eqOp(opVal)))
+// const opCond = opVal => R.both(Lexeme.its.expr, P(util.prop.head,eqOp(opVal)))
 const stateConds = {
   pipe:Lexeme.its.pipe,
-  open:opCond(op.backpipe),
-  mid:opCond(op.middlepipe),
-  close:opCond(op.forwardpipe)
+  open:eqOp.backpipe,
+  mid:eqOp.middlepipe,
+  close:eqOp.forwardpipe
 }
 const stConds = R.append([R.T,states.pipe],R.map(e=>[stateConds[e],()=>states[e]],stateNames))
 

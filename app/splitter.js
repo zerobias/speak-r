@@ -4,7 +4,7 @@ const util = require('./util')
 
 const Token = require('./token.js')
 const log = util.pipelog('splitter')
-const operators = require('./syntax.js').operators
+const operators = R.values(require('./lang/syntax').op) //TODO rewrite op list using
 
 const toPipe = util.toPipe
 const stringMorpher = morph=>R.map(R.when(util.isString,morph))
