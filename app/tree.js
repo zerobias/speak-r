@@ -15,6 +15,7 @@ const HeadList = require('./head-list.js')
 const types = require('./lang/syntax').types
 const tool = require('./lang/tooling')
 const eq = tool.equals
+const Print = require('./print')
 // const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 // const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
@@ -126,7 +127,7 @@ function lexemize(data) {
 }
 
 function getSyntaxTree(data) {
-  return P(stringTokenTransform,detectContext,pipelog('lexemize<-'),lexemize,pipelog('intoPipes'),intoPipes)(data)
+  return P(stringTokenTransform,detectContext,lexemize,intoPipes)(data)
 }
 
 module.exports = getSyntaxTree

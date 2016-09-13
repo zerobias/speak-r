@@ -1,5 +1,6 @@
 const R = require('ramda')
 const util = require('./util')
+const P = util.P
 // const S = require('sanctuary')
 
 const Token = require('./token.js')
@@ -13,7 +14,7 @@ const rejectEmpty = R.reject(R.isEmpty)
 
 const opersFuncs = [
   R.split,
-  R.pipe(Token.Operator,R.intersperse)
+  P(Token.Operator,R.intersperse)
 ]
 const constFuncs = [
   rejectEmpty,
@@ -21,10 +22,10 @@ const constFuncs = [
 ]
 
 const splitCond = symb=>R.cond([
-  [R.is(String),symb],
+  [util.isString,symb],
   [R.T,log('uncaught')]
 ])
-const unnester = symbPipe=>R.pipe(
+const unnester = symbPipe=>P(
   symbPipe,
   R.unnest)
 const splitsPipe = [
@@ -36,8 +37,8 @@ const splitsPipe = [
   R.map,
   unnester,
   log('splitPipe')]
-const splitter = R.pipe(toPipe,R.map(R.__,operators),toPipe)(splitsPipe)
-const cleaner = R.pipe(R.unnest,stringTrim,rejectEmpty,log('end'))
+const splitter = P(toPipe,R.map(R.__,operators),toPipe)(splitsPipe)
+const cleaner = P(R.unnest,stringTrim,rejectEmpty,log('end'))
 const execFuncs = [
   util.arrayify,
   splitter,

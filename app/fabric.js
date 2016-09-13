@@ -5,15 +5,16 @@ const syntax = require('./lang/syntax')
 const Token = require('./token.js')
 const util = require('./util')
 const S = util.S
+const P = util.P
 
 const isString = util.isString
 // const log = util.log('fabric')
 // const pipelog = util.pipelog('fabric')
 
 const TokenFabric = (tokenType, condition, transformation) => {
-  const onCondition = R.pipe(util.arrayify, R.allPass, S.either(R.__, R.F))
+  const onCondition = P(util.arrayify, R.allPass, S.either(R.__, R.F))
   const addSteps = R.flip(R.concat)([tokenType, S.Right])
-  const transformUntouched = R.pipe(
+  const transformUntouched = P(
     R.defaultTo([]),
     util.arrayify,
     addSteps,
@@ -24,8 +25,8 @@ const TokenFabric = (tokenType, condition, transformation) => {
 
 const quoteProcessor = function () {
   const isQuote = R.anyPass(R.map(R.equals, syntax.quotes))
-  const isQuoted = R.allPass(R.map(e => R.pipe(e, isQuote), [R.head, R.last]))
-  const removeQuotes = R.pipe(R.init, R.tail)
+  const isQuoted = R.allPass(R.map(e => P(e, isQuote), [R.head, R.last]))
+  const removeQuotes = P(R.init, R.tail)
   return TokenFabric(Token.String, [isString, isQuoted], [R.trim, removeQuotes])
 }
 const typesProcessor = () => {
@@ -40,7 +41,7 @@ const vendorProcessor = () => {
   const isRamda = obj => isFunc(R[obj])
   return TokenFabric(Token.R, [isString, isRamda], R.prop(R.__, R))
 }
-const contextValidation = str => R.pipe(R.match(/\D\w+/), R.head, R.equals(str))(str)
+const contextValidation = str => P(R.match(/\D\w+/), R.head, R.equals(str))(str)
 const isContext = TokenFabric(Token.Context, contextValidation)
 
 const preprocess = S.lift(R.when(isString, R.trim))

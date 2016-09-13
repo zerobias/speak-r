@@ -1,4 +1,4 @@
-// const R = require('ramda')
+const R = require('ramda')
 // const S = require('sanctuary')
 
 const preproc = require('./string-preprocess')
@@ -8,15 +8,23 @@ const convolve = require('./convolve')
 const util = require('./util')
 const P = util.P
 const log = util.log('index')
-// const pipelog = util.pipelog('index')
-// const Print = require('./print.js')
+const pipelog = util.pipelog('index')
+const Print = require('./print.js')
 const Say = require('./say.js')
 
+
+
+const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
+
+const maptaphead = tag=> R.tap(R.map(e=>Print.headList(tag,e,-1)))
+
+const mapprint = tag => R.tap(R.map(pipelog(tag)))
+
 function say(data) {
-  return P(preproc,getTree,convolve,/*R.tap(e=>Print.headList('conv',e,-1)),*/ Say)(data)
+  return P(preproc,mapprint('preproc'),getTree,maptaphead('tree'),convolve,taplog('conv'), Say)(data)
 }
 
-const pureExample = "data sright :: head prop 'index' splitAt _ @data sright"
+const pureExample = "example := data sright :: head prop 'index' splitAt _ @data sright"
 const simple = "when <| == 1 not <|> + 10 |> + 100"
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
@@ -24,8 +32,8 @@ const simple = "when <| == 1 not <|> + 10 |> + 100"
 log('example')(pureExample)
 
 // Print.headList('conv',convolved,-1)
-let word = say(simple)
+let word = say(pureExample)
 // let res = word(1)
-// log('word')(res)
+// log('res')(res)
 
 module.exports = say
