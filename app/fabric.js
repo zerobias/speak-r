@@ -43,6 +43,8 @@ const vendorProcessor = () => {
 }
 const contextValidation = str => P(R.match(/\D\w+/), R.head, R.equals(str))(str)
 const isContext = TokenFabric(Token.Context, contextValidation)
+const argValidation = R.both(P(R.head,R.equals('@')),P(R.tail,contextValidation))
+const isArg = TokenFabric(Token.Arg, argValidation, R.tail)
 
 const preprocess = S.lift(R.when(isString, R.trim))
 const postprocess = R.identity
@@ -52,6 +54,7 @@ module.exports = {
   isVendor: vendorProcessor(),
   isNumber,
   isContext,
+  isArg,
   preprocess,
   postprocess
 }

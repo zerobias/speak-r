@@ -19,6 +19,8 @@ const singleWordParsing =
     fab.isType,
     pipelog('->isVendor'),
     fab.isVendor,
+    pipelog('->isArg'),
+    fab.isArg,
     pipelog('->isContext'),
     fab.isContext,
     pipelog('->postprocess'),

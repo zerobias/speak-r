@@ -21,7 +21,9 @@ const types = {
   op:'operator',
   any:'any',
   context:'context',
-  lex:'lexeme'
+  lex:'lexeme',
+  F:'contextF',
+  arg:'argument'
 }
 const jstypes = [
   ['Array', Array],

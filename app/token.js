@@ -22,5 +22,6 @@ module.exports = {
   Number:   TokenFabric('number'),
   Operator: TokenFabric('operator'),
   Any:      TokenFabric('any'),
-  Context:  TokenFabric('context')
+  Context:  TokenFabric('context'),
+  Arg:      TokenFabric('arg')
 }

@@ -25,8 +25,8 @@ const Print = require('./print')
 // const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 
 
-// const filterM = func=>e=>e.filter(func)
-// const filterMs = func=>P(R.map(filterM(func)),S.justs)
+const filterM = func=>e=>e.filter(func)
+const filterMs = func=>P(R.map(filterM(func)),S.justs)
 // const indexOf = e => e.isJust ? e.value.index : NaN
 // const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
 
@@ -34,37 +34,49 @@ const Print = require('./print')
 // const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
 // const eq.op = R.map(isSymbol,op)
 
-function stringTokenTransform(data) {
+const eitherToMaybe = R.map(S.eitherToMaybe)
+
+function indexation(data) {
   const indexPipe = (e,i)=>S.lift(R.assoc('index',i))(e)
-  const indexation = list=>list.map(indexPipe)
-  return P(R.map(S.eitherToMaybe),indexation)(data)
+  const _indexation = list=>list.map(indexPipe)
+  return _indexation(data)
 }
 
-// function stageHeader(data) {
-//   const errorFabric = text=>()=>S.Left(text)
-//   const err = R.map(errorFabric,{
-//     nothing:'Nothing finded',
-//     many:'Find more than one ::',
-//     other:'Undefined error'
-//   })
-//   const findDD = filterMs(eq.op.doubledots)
-//   const split = P(R.head,R.prop('index'),R.splitAt(R.__,data),S.Right)
-//   const indexChanger = RP.do.lensIndex.over.exec
-//   const over = {
-//     head:indexChanger(0),
-//     body:indexChanger(1)
-//   }
-//   const headChange = P(filterMs(isTokenCat(types.context)),R.map(P(Lexeme.Context,S.Maybe.of)))
-//   const headContextMounter = S.either(S.Left,P(over.head(headChange),over.body(R.tail),S.Right))
-//   const cond = R.cond([
-//     [R.isEmpty,err.nothing],
-//     [e=>R.gt(R.length(e),1),err.many],
-//     [e=>R.equals(R.length(e),1),split],
-//     [R.T,err.other]
-//   ])
+const valEq = R.propEq('value')
+const check =func=> e=>R.both(S.isRight,valEq(true))(S.lift(func,e))
+function stageHeader(data) {
+  const eiSplitOn = func=>P(R.splitWhen(check(func)), R.adjust(R.tail,1))
 
-//   return P(findDD,cond,headContextMounter)(data)
-// }
+  const splitContext = eiSplitOn(eq.op.doubledots)
+  const splitDefine = eiSplitOn(eq.op.define)
+  const writeField = (field,obj)=>res=>{
+    if (R.isEmpty(res[1])) {
+      obj[field] = false
+      return res[0]
+    } else {
+      obj[field] = S.rights(res[0])
+      return res[1]
+    }
+  }
+  let props = {}
+  let res = P(splitDefine,writeField('define',props),splitContext,writeField('context',props))
+  props.data = res(data)
+  return props
+}
+const replacer = (type,value)=>e=>{
+  e.value = value
+  e.type = type
+  return e
+}
+function injectContext(data) {
+  if (!data.context) return data
+  const makeFunc = P(R.assoc('type',types.F),R.assoc('meta','func'),R.assoc('link','func'))
+  const makeVal = P(R.assoc('type',types.any),R.assoc('meta','val'),R.over(R.lensProp('value'),R.tail))
+  const changeObj = R.ifElse(P(R.prop('value'),R.head,R.equals('@')),makeVal,makeFunc)
+  const getTextVals = P(S.rights,R.pluck('value'),R.pluck('value'))
+  // const inject = keys=>R.when(R.contains(keys),P(R.indexOf(R.__,keys),R.lensIndex))
+  // return R.when(eq.type.context,)
+}
 function detectContext(data) {
   // const filt = filterMs(eq.op.doubledots())//x=>R.whereEq({value:"data"},x))
   // let dd = P(filt,RP.do.head.indexOf(R.__,data).splitAt(R.__,data).adjust(R.tail,1).exec)(data)
@@ -105,12 +117,6 @@ function checkReplace(data) {
     [eq.op.minus,types.R,R.subtract],
     [eq.op.map,types.R,R.map]
   ]
-
-  const replacer = (type,value)=>e=>{
-    e.value = value
-    e.type = type
-    return e
-  }
   const doCheckReplace = (checker,type,value)=>R.map(R.when(checker,replacer(type,value)))
   const reducer = (acc,val)=>R.apply(doCheckReplace,val)(acc)
   const doReplaceAll = rules=>data=>R.reduce(reducer,data,rules)
@@ -119,7 +125,7 @@ function checkReplace(data) {
 }
 
 function lexemize(data) {
-  const detectAtomic = R.when(P(prop.head,eq.type.R),Lexeme.AtomicFunc)
+  const detectAtomic = R.when(P(prop.head,eq.type.R.context),Lexeme.AtomicFunc)
   const detectExpr   = R.when(P(prop.head,eq.type.op),Lexeme.Expression)
   const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
   const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
@@ -127,7 +133,8 @@ function lexemize(data) {
 }
 
 function getSyntaxTree(data) {
-  return P(stringTokenTransform,detectContext,lexemize,intoPipes)(data)
+  let splitted = stageHeader(data)
+  return P(indexation,eitherToMaybe,detectContext,lexemize,intoPipes)(splitted.data)
 }
 
 module.exports = getSyntaxTree
