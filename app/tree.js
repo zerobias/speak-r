@@ -16,6 +16,7 @@ const types = require('./lang/syntax').types
 const tool = require('./lang/tooling')
 const eq = tool.equals
 const Print = require('./print')
+const claim = require('./claim')
 const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(tag+' '+i)(o)))
 // const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 // const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
@@ -149,49 +150,11 @@ let dataThird = e=>e+'third'
 
 const log = tag=>(...data)=>console.log(tag,R.when(e=>e.length===1,R.head)(data))
 const taplog = tag=>R.tap(log(tag))
-//====
-
-class Claimer {
-  constructor(index) {
-    this.dataLens = R.lensIndex(index)
-    this.value;
-  }
-  static listener(claim) {
-    return data => claim.value = R.view(claim.dataLens,data)
-  }
-  get pipe() {
-    let self = this
-    return function(pipeData) {
-      if (self.value)
-        return self.value(pipeData)
-      else {
-        console.warn('empty Claimer!',self,pipeData)
-        return pipeData
-      }
-    }
-  }
-}
-class DataClaim {
-  addListener(listenerCb) {
-    this.listeners.push(Claimer.listener(listenerCb))
-  }
-  constructor() {
-    this.listeners = []
-  }
-
-  get onData() {
-    let listeners = this.listeners
-    return function(data) {
-      R.unless(R.isEmpty,R.forEach(e=>e(data)))(listeners)
-      return R.head(data)
-    }
-  }
-}
 
 function modelled(...data) {
   log('modelled')(data)
-  let modClaim = new DataClaim()
-  let modClaimer = new Claimer(2)
+  let modClaim = new claim.Claimed()
+  let modClaimer = new claim.Claimer(2)
   modClaim.addListener(modClaimer)
   return R.pipe(taplog('start'),modClaim.onData,modClaimer.pipe,taplog('init'))(data)
 }
