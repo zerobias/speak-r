@@ -1,11 +1,10 @@
 const R = require('ramda')
-const util = require('./util')
+const util = require('../util')
 const P = util.P
-// const S = require('sanctuary')
 
-const Token = require('./token.js')
+const Token = require('../model/token')
 const log = util.pipelog('splitter')
-const operators = R.values(require('./lang/syntax').op) //TODO rewrite op list using
+const operators = R.values(require('../lang/syntax').op) //TODO rewrite op list using
 
 const toPipe = util.toPipe
 const stringMorpher = morph=>R.map(R.when(util.isString,morph))

@@ -8,7 +8,7 @@ const trans = funcs=>R.transduce(pipeA(funcs), R.flip(R.append), [])
 
 const filenames = ['|>splitter','index']
 
-const moduleName = name=>['../app',name+'.js'].join('/')
+const moduleName = name=>['../app',name+''].join('/')
 const testName = name=>R.join('.')(['./'+name,'test','js'])
 const morphs = [testName,moduleName]
 

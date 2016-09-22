@@ -1,7 +1,7 @@
 const R = require('ramda')
 const tap = require('tape')
 const tapSpec = require('tap-spec')
-const tested = require('../app/index.js')
+const tested = require('../app/index')
 
 const examples = {
   e1:"when <| is Array <|> compose <| map <|> + 2 |> map objOf 'must'",

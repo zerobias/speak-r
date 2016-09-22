@@ -1,2 +1,2 @@
 
-module.exports = require('./app/index.js')
+module.exports = require('./app/index')

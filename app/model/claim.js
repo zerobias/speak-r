@@ -1,6 +1,6 @@
 const R = require('ramda')
-const util = require('./util')
-const log = util.log('tree')
+const util = require('../util')
+const log = util.log('model:claim')
 class Claimer {
   constructor(config) {
     this.dataLens = R.lensIndex(config.index)
@@ -68,4 +68,4 @@ class Claimed {
   }
 }
 
-module.exports = {Claimer,Claimed}
+module.exports = Claimed

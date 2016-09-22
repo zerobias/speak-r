@@ -1,14 +1,13 @@
 const R = require('ramda')
-const HeadList = require('./head-list.js')
-const Lexeme = require('./lexeme.js')
+
 const util = require('./util')
-const S = util.S
 const P = util.P
+const S = util.S
 const log = util.log('tree')
 const prop = util.prop
-const types = require('./lang/syntax').types
-const eq = require('./lang/tooling').equals
-const claim = require('./claim')
+
+const eq = require('../lang/tooling').equals
+const Claim = require('../model/claim')
 
 function detectContext(context) {
   if (!context) return R.identity
@@ -18,7 +17,7 @@ function detectContext(context) {
     context
     R
     S
-    let modClaim = new claim.Claimed()
+    let modClaim = new Claim()
     const chain = func=>o=>o.chain(func)
     const modify = e=>{
       nameIndexMap
@@ -53,37 +52,4 @@ function detectContext(context) {
   }
 }
 
-function CompileException(obj) {
-  this.message = `Can not compile object ${obj}`
-  this.name = "Compile exeption"
-}
-
-function collectData(obj) {
-  const collect = R.cond([
-    [R.is(Array),sayPipe],
-    // [Lexeme.its.arg,P(R.path(['head','value']),e=>e.arg())],
-    [eq.type.arg,e=>e.value()],
-    [P(HeadList.isList,R.not),util.prop.val],
-    [Lexeme.its.pipe,sayPipe],
-    [Lexeme.its.atomic,sayAtomic],
-    [R.T,e=>{throw new CompileException(e)}]
-  ])
-  return collect(obj)
-}
-
-function sayPipe(list) {
-  const normalize = R.when(HeadList.isList,R.prop('toArray'))
-  return P(normalize,R.map(collectData),R.apply(R.pipe))(list)
-}
-
-function sayAtomic(list) {
-  return HeadList.hasTail(list)
-    ? R.apply(collectData(list.head),R.map(collectData,list.tail))
-    : collectData(list.head)
-}
-
-function say(data) {
-  return collectData(data)
-}
-
-module.exports = say
+module.exports = detectContext

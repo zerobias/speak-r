@@ -1,16 +1,16 @@
 const R = require('ramda')
 
-const util = require('./util')
+const util = require('../util')
 const S = util.S
 
 const P = util.P
 const log = util.log('tree')
 const pipelog = util.pipelog('tree')
 
-const HeadList = require('./head-list.js')
-const Lexeme = require('./lexeme.js')
+const HeadList = require('../model/head-list')
+const Lexeme = require('../model/lexeme')
 
-const tool = require('./lang/tooling')
+const tool = require('../lang/tooling')
 
 
 const eqOp = tool.eq.op

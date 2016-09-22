@@ -1,6 +1,6 @@
 const R = require('ramda')
 
-const lexemeTypes = require('./lang/syntax').lexemeTypes
+const lexemeTypes = require('../lang/syntax').lexemeTypes
 
 class ILexeme {
   constructor(typename,obj) {

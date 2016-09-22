@@ -1,7 +1,7 @@
 const R = require('ramda')
 const debug = require('debug')
 
-const RP = require('./ramda-piped')
+const RP = require('./model/ramda-piped')
 
 const tagvalue = (tag,mess)=>R.isNil(mess) ? tag : [tag,mess].join(':  ')
 const log = tag=>mess=>debug(tagvalue(tag,mess))
@@ -18,8 +18,7 @@ const isContainOrEq = P(arrayify,R.flip(R.contains))
 const isString = R.is(String)
 
 
-const {create, env} = require('sanctuary');
-
+const {create, env} = require('sanctuary')
 const checkTypes = false//process.env.NODE_ENV !== 'production';
 const S = create({checkTypes: checkTypes, env: env})
 

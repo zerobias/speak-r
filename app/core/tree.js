@@ -1,6 +1,6 @@
 const R = require('ramda')
 
-const util = require('./util')
+const util = require('../util')
 const S = util.S
 
 const P = util.P
@@ -9,14 +9,14 @@ const log = util.log('tree')
 const pipelog = util.pipelog('tree')
 const prop = util.prop
 
-const Lexeme = require('./lexeme.js')
-const HeadList = require('./head-list.js')
+const Lexeme = require('../model/lexeme')
+const HeadList = require('../model/head-list')
 
-const types = require('./lang/syntax').types
-const tool = require('./lang/tooling')
+const types = require('../lang/syntax').types
+const tool = require('../lang/tooling')
 const eq = tool.equals
-const Print = require('./print')
-const claim = require('./claim')
+const Print = require('../print')
+
 const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(tag+' '+i)(o)))
 // const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 // const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"

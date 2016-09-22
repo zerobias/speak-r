@@ -1,9 +1,9 @@
 const R = require('ramda')
-const syntax = require('./lang/syntax')
+const syntax = require('../lang/syntax')
 
 
-const Token = require('./token.js')
-const util = require('./util')
+const Token = require('../model/token')
+const util = require('../util')
 const S = util.S
 const P = util.P
 

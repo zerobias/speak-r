@@ -1,10 +1,10 @@
 const R = require('ramda')
 
-const fab = require('./fabric.js')
+const fab = require('./fabric')
 
-const splitter = require('./splitter.js')
+const splitter = require('./splitter')
 
-const util = require('./util')
+const util = require('../util')
 const S = util.S
 
 const pipelog = util.pipelog('preproc')

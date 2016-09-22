@@ -1,16 +1,16 @@
 const R = require('ramda')
 // const S = require('sanctuary')
 
-const preproc = require('./string-preprocess')
-const getTree = require('./tree')
-const convolve = require('./convolve')
+const preproc = require('./core/string-preprocess')
+const getTree = require('./core/tree')
+const convolve = require('./core/convolve')
+const Say = require('./core/say')
 
 const util = require('./util')
 const P = util.P
 const log = util.log('index')
 const pipelog = util.pipelog('index')
-const Print = require('./print.js')
-const Say = require('./say.js')
+const Print = require('./print')
 
 
 

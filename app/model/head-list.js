@@ -1,6 +1,6 @@
 const R = require('ramda')
 
-const util = require('./util')
+const util = require('../util')
 const S = util.S
 
 const P = util.P
