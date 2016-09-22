@@ -82,6 +82,7 @@ function convolve(dataPack) {
     stack.addToLast(optimise(e))
   }
   dataPack.tree = P(Lexeme.Pipe,optimise)(result)
+
   return dataPack
 }
 

@@ -34,6 +34,22 @@ class HeadList {
       this.tail.push(e)
     return this
   }
+  static get prepend() {
+    return R.curry((val,list)=>{
+      list.tail = R.prepend(list.head, list.tail)
+      list.head = val
+      return list
+    })
+  }
+  static cyclic(func) {
+    return function(list) {
+      for(let e of list)
+        e = P(R.when(
+          HeadList.isList,
+          HeadList.cyclic(func)),func)(e)
+      return list
+    }
+  }
 
   static scan(scanner,morpher) {
     return list => {

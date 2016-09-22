@@ -26,7 +26,8 @@ const prop = {
   type:R.prop('type'),
   val:R.prop('value'),
   head:R.prop('head'),
-  tail:R.prop('tail')
+  tail:R.prop('tail'),
+  data:R.prop('data')
 }
 module.exports = {
   pipelog,log,isString,arrayify,toPipe,P,isContainOrEq,prop,RP,S
