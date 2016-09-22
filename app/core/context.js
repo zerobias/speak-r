@@ -1,6 +1,6 @@
 const R = require('ramda')
 
-const util = require('./util')
+const util = require('../util')
 const P = util.P
 const S = util.S
 const log = util.log('tree')
@@ -39,8 +39,9 @@ function detectContext(context) {
     // const addClaimedToken = R.prepend(claimedToken)
     const modifyRef = R.when(chain(eq.type.context.arg),modify)
     // const mapMod = P(R.map(modifyRef),addClaimedToken)
-    // let res = mapMod(data)
-    return new Promise(resolve => {
+    let res = data
+    return res
+    /*return new Promise(resolve => {
       log('data')(data)
       let claimedData = modClaim.onData(data)
       log('claimed')(claimedData)
@@ -48,7 +49,7 @@ function detectContext(context) {
     }).then(value => {
       log('resolved')(value)
       return R.map(modifyRef)(value)
-    },log('err detectContext'))
+    },log('err detectContext'))*/
   }
 }
 

@@ -7,6 +7,17 @@ const P = util.P
 // const types = require('./lang/syntax').types
 const eq = require('../lang/tooling').equals
 
+const Context = require('./context')
+
+function contextInjecting(dataPack) {
+  const onlyFirst = R.head
+  let render = collectData(dataPack.tree)
+  let encut = P(onlyFirst,render)
+  return function(...args) {
+    return encut(args)
+  }
+}
+
 function CompileException(obj) {
   this.message = `Can not compile object ${obj}`
   this.name = "Compile exeption"
@@ -36,8 +47,8 @@ function sayAtomic(list) {
     : collectData(list.head)
 }
 
-function say(data) {
-  return collectData(data)
+function say(dataPack) {
+  return contextInjecting(dataPack)
 }
 
 module.exports = say

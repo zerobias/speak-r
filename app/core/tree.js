@@ -136,16 +136,18 @@ function addArgName(data) {
   return R.map(apply,data)
 }
 function getSyntaxTree(data) {
-  let splitted = stageHeader(data)
+  // let splitted = stageHeader(data)
   //detectContext(splitted.context)
-  return P(
+  const treePipe = P(
     indexation,tapArr('indexation'),
     addArgName,tapArr('argName'),
       // ,//tapArr('detectContext'),
     eitherToMaybe,//tapArr('toMaybe'),
     lexemize,//tapArr('lexemize'),
     intoPipes
-    )(splitted.data)
+    )
+  const setTree = P(stageHeader,e=>R.assoc('tree',treePipe(e.data),e))
+  return setTree(data)
 }
 
 module.exports = getSyntaxTree

@@ -58,7 +58,8 @@ function Stack() {
   this.addToLast = val=>R.last(this.value)(val)
 }
 
-function convolve(data) {
+function convolve(dataPack) {
+  let data = dataPack.tree
   if (!R.is(Array,data)) return S.Left('No array recieved')
   let result = HeadList.emptyList()
   let stack = new Stack()
@@ -80,7 +81,8 @@ function convolve(data) {
     state = nextState
     stack.addToLast(optimise(e))
   }
-  return P(Lexeme.Pipe,optimise)(result)
+  dataPack.tree = P(Lexeme.Pipe,optimise)(result)
+  return dataPack
 }
 
 module.exports = convolve

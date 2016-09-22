@@ -14,16 +14,18 @@ const Print = require('./print')
 
 
 
-const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
+const taplog = tag=>R.tap(e=>Print.headList(tag,e.tree,-1))
 
-const maptaphead = tag=> R.tap(R.map(e=>Print.headList(tag,e,-1)))
+const maptaphead = tag=> R.tap(P(
+  R.prop('tree'),
+  R.map(e=>Print.headList(tag,e,-1))))
 
 const mapprint = tag => R.tap(R.map(pipelog(tag)))
 
 function say(data) {
   return P(
     preproc,mapprint('preproc'),
-    getTree,maptaphead('tree'),
+    getTree,maptaphead('getTree'),
     convolve,taplog('conv'),
     Say)(data)
 }
