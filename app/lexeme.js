@@ -19,6 +19,9 @@ class Lexeme {
   static Expression(tokensHList) {
     return new ILexeme(lexemeTypes.expr,tokensHList)
   }
+  static Argument(tokensHList) {
+    return new ILexeme(lexemeTypes.arg,tokensHList)
+  }
   static get its() {
     const eq = R.propEq('lexeme')
     return R.map(eq,lexemeTypes)

@@ -15,9 +15,11 @@ class HeadList {
       this.head = head
       this.tail = rawList||[]
     }
-  }
-  map(func) {
-    return R.map(func,this.toArray)
+    this[Symbol.iterator] = function* () {
+      yield this.head
+      for (let e of this.tail)
+        yield e
+    }
   }
   get toArray() {
     return R.prepend(this.head,this.tail)
@@ -33,6 +35,20 @@ class HeadList {
     return this
   }
 
+  static scan(scanner,morpher) {
+    return list => {
+      for(let o of list)
+        o = P(
+          R.when(
+            HeadList.isList,
+            HeadList.scan(scanner,morpher)),
+          R.when(
+            scanner,
+            morpher)
+        )(o)
+      return list
+    }
+  }
   static hasTail(list) {return R.has('tail',list)&&!R.isEmpty(list.tail)}
   static last(list) {
     return HeadList.hasTail(list)

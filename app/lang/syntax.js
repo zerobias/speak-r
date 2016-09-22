@@ -43,6 +43,7 @@ const lexemeTypes = {
   pipe:'Pipe',
   context:'Context',
   atomic:'AtomicFunc',
-  expr:'Expression'
+  expr:'Expression',
+  arg:'Argument'
 }
 module.exports = {op,types,quotes,categories,jstypes,lexemeTypes}

@@ -5,7 +5,7 @@ const S = util.S
 
 const P = util.P
 const RP = util.RP
-// const log = util.log('tree')
+const log = util.log('tree')
 const pipelog = util.pipelog('tree')
 const prop = util.prop
 
@@ -70,20 +70,7 @@ const replacer = (type,value)=>e=>{
   e.type = type
   return e
 }
-function injectContext(data) {
-  if (!data.context) return data
-  const makeFunc = P(R.assoc('type',types.F),R.assoc('meta','func'),R.assoc('link','func'))
-  const makeVal = P(R.assoc('type',types.any),R.assoc('meta','val'),R.over(R.lensProp('value'),R.tail))
-  const changeObj = R.ifElse(P(R.prop('value'),R.head,R.equals('@')),makeVal,makeFunc)
-  const getTextVals = P(S.rights,R.pluck('value'),R.pluck('value'))
-  // const inject = keys=>R.when(R.contains(keys),P(R.indexOf(R.__,keys),R.lensIndex))
-  // return R.when(eq.type.context,)
-}
-function detectContext(data) {
-  // const filt = filterMs(eq.op.doubledots())//x=>R.whereEq({value:"data"},x))
-  // let dd = P(filt,RP.do.head.indexOf(R.__,data).splitAt(R.__,data).adjust(R.tail,1).exec)(data)
-  return data
-}
+
 function headSplitter(isMaster,onMaster,changeLast) {
   const lensLast = RP.do.length.dec.lensIndex.exec
   const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
@@ -125,39 +112,40 @@ function checkReplace(data) {
   const replAll = doReplaceAll(replacers)
   return replAll(data)
 }
-
+const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
 function lexemize(data) {
+  const headlistFab  = e=>new HeadList([e])
   const detectAtomic = R.when(P(prop.head,eq.type.R.context),Lexeme.AtomicFunc)
   const detectExpr   = R.when(P(prop.head,eq.type.op),Lexeme.Expression)
-  const detecting = P(e=>new HeadList(e),detectAtomic,detectExpr)
-  const lexemizing = P(S.lift(checkReplace),intoAtomics,R.map(detecting))
+  const detectArg       = R.over(R.lensProp('tail'),R.map(R.when(eq.type.arg,P(headlistFab,Lexeme.Argument))))
+  const detecting = P(
+    e=>new HeadList(e),
+    detectAtomic,
+    detectExpr,taplog('detectExpr ')
+    // detectArg,taplog('detectArg->')
+    )
+  const lexemizing = P(
+    S.lift(checkReplace),tapArr('checkReplace'),
+    intoAtomics,pipelog('intoAtomics'),
+    R.map(detecting))
   return lexemizing(data)
 }
-
+function addArgName(data) {
+  const morph = e=>R.when(eq.type.arg.context(),R.assoc('argName',e.value))(e)
+  const apply = e=>S.Right(morph).ap(e)
+  return R.map(apply,data)
+}
 function getSyntaxTree(data) {
   let splitted = stageHeader(data)
-  // const containerFunc = pipe=>(...dataArr) =>P(R.head,pipe)(dataArr)
+  //detectContext(splitted.context)
   return P(
     indexation,tapArr('indexation'),
-    eitherToMaybe,tapArr('toMaybe'),
-    detectContext,tapArr('detectContext'),
-    lexemize,tapArr('lexemize'),
-    intoPipes)(splitted.data)
+    addArgName,tapArr('argName'),
+      // ,//tapArr('detectContext'),
+    eitherToMaybe,//tapArr('toMaybe'),
+    lexemize,//tapArr('lexemize'),
+    intoPipes
+    )(splitted.data)
 }
-let dataFirst = "value one"
-let dataSec = 2
-let dataThird = e=>e+'third'
-
-const log = tag=>(...data)=>console.log(tag,R.when(e=>e.length===1,R.head)(data))
-const taplog = tag=>R.tap(log(tag))
-
-function modelled(...data) {
-  log('modelled')(data)
-  let modClaim = new claim.Claimed()
-  let modClaimer = new claim.Claimer(2)
-  modClaim.addListener(modClaimer)
-  return R.pipe(taplog('start'),modClaim.onData,modClaimer.pipe,taplog('init'))(data)
-}
-log('mod')(modelled(dataFirst,dataSec,dataThird))
 
 module.exports = getSyntaxTree

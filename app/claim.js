@@ -1,11 +1,27 @@
 const R = require('ramda')
+const util = require('./util')
+const log = util.log('tree')
 class Claimer {
-  constructor(index) {
-    this.dataLens = R.lensIndex(index)
+  constructor(config) {
+    this.dataLens = R.lensIndex(config.index)
+    this.isArg = config.isArg
     this.value;
   }
   static listener(claim) {
-    return data => claim.value = R.view(claim.dataLens,data)
+    return data => {log('listen!')(data); claim.value = R.view(claim.dataLens,data)}
+  }
+  get data() {
+    let self = this
+    return function(pipeData) {
+      if (self.value)
+        return self.isArg
+          ? self.value
+          : self.value(pipeData)
+      else {
+        console.warn('empty Claimer!',self,pipeData)
+        return pipeData
+      }
+    }
   }
   get pipe() {
     let self = this
@@ -15,6 +31,17 @@ class Claimer {
       else {
         console.warn('empty Claimer!',self,pipeData)
         return pipeData
+      }
+    }
+  }
+  get arg() {
+    let self = this
+    return function() {
+      if (self.value)
+        return self.value
+      else {
+        console.warn('empty Claimer!',self,null)
+        return null
       }
     }
   }
@@ -33,6 +60,11 @@ class Claimed {
       R.unless(R.isEmpty,R.forEach(e=>e(data)))(listeners)
       return R.head(data)
     }
+  }
+  Claimer(config) {
+    let newClaimer = new Claimer(config)
+    this.addListener(newClaimer)
+    return newClaimer
   }
 }
 

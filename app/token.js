@@ -1,5 +1,5 @@
 const R = require('ramda')
-
+const types = require('./lang/syntax').types
 /*class Token {
   constructor(type,value) {
     this.type = type
@@ -16,12 +16,12 @@ const TokenFabric = R.curry((category,obj)=>{
 })
 
 module.exports = {
-  Type:     TokenFabric('type'),
-  R:        TokenFabric('R'),
-  String:   TokenFabric('string'),
-  Number:   TokenFabric('number'),
-  Operator: TokenFabric('operator'),
-  Any:      TokenFabric('any'),
-  Context:  TokenFabric('context'),
-  Arg:      TokenFabric('arg')
+  Type:     TokenFabric(types.type),
+  R:        TokenFabric(types.R),
+  String:   TokenFabric(types.string),
+  Number:   TokenFabric(types.number),
+  Operator: TokenFabric(types.op),
+  Any:      TokenFabric(types.any),
+  Context:  TokenFabric(types.context),
+  Arg:      TokenFabric(types.arg)
 }

@@ -21,10 +21,14 @@ const maptaphead = tag=> R.tap(R.map(e=>Print.headList(tag,e,-1)))
 const mapprint = tag => R.tap(R.map(pipelog(tag)))
 
 function say(data) {
-  return P(preproc,mapprint('preproc'),getTree,maptaphead('tree'),convolve,taplog('conv'), Say)(data)
+  return P(
+    preproc,mapprint('preproc'),
+    getTree,maptaphead('tree'),
+    convolve,taplog('conv'),
+    Say)(data)
 }
 
-const pureExample = "example := data sright :: head prop 'index' splitAt _ @data sright"
+const pureExample = "indexes data sright :: head prop 'index' append _ @data sright" //example := //
 const simple = "when <| == 1 not <|> + 10 |> + 100"
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
@@ -33,7 +37,14 @@ log('example')(pureExample)
 
 // Print.headList('conv',convolved,-1)
 let word = say(pureExample)
-// let res = word(1)
-// log('res')(res)
+let indexes = [{index:1},{index:[0,1,2,3]},0]
+let dat = [0,10,20,30,40,50]
+let sright = R.objOf('result')
+let res = word([indexes,dat,sright])
+log('res')(res)
+// word.then(value=>{
+//   let finalRes = value([indexes,dat,sright])
+//   log('res')(value,finalRes)
+// },log('err'))
 
 module.exports = say
