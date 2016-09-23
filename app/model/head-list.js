@@ -51,20 +51,6 @@ class HeadList {
     }
   }
 
-  static scan(scanner,morpher) {
-    return list => {
-      for(let o of list)
-        o = P(
-          R.when(
-            HeadList.isList,
-            HeadList.scan(scanner,morpher)),
-          R.when(
-            scanner,
-            morpher)
-        )(o)
-      return list
-    }
-  }
   static hasTail(list) {return R.has('tail',list)&&!R.isEmpty(list.tail)}
   static last(list) {
     return HeadList.hasTail(list)

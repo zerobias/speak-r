@@ -1,5 +1,4 @@
 const R = require('ramda')
-// const S = require('sanctuary')
 
 const preproc = require('./core/string-preprocess')
 const getTree = require('./core/tree')
@@ -39,16 +38,11 @@ log('example')(pureExample)
 
 // Print.headList('conv',convolved,-1)
 let word = say(pureExample)
-// log('word')(word)
 let indexes = [{index:[1,3]},{index:[0,1,2,3]},0]
 let dat = [0,5,20,30,40,50]
 let sright = R.objOf('result')
 let flipap = R.flip(R.append)
 let res = word(indexes,dat,sright,flipap)
 log('res')(res)
-// word.then(value=>{
-//   let finalRes = value([indexes,dat,sright])
-//   log('res')(value,finalRes)
-// },log('err'))
 
 module.exports = say

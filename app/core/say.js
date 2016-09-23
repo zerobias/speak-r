@@ -4,7 +4,7 @@ const Lexeme = require('../model/lexeme')
 const util = require('../util')
 const P = util.P
 const pipelog = util.pipelog('tree')
-
+const Outfall = require('../model/outfall')
 const eq = require('../lang/tooling').equals
 
 const Context = require('./context')
@@ -17,7 +17,6 @@ function CompileException(obj) {
 function collectData(obj) {
   const collect = R.cond([
     [R.is(Array),sayPipe],
-    // [Lexeme.its.arg,P(R.path(['head','value']),e=>e.arg())],
     [Lexeme.its.pipe,sayPipe],
 
     // [eq.type.arg,P(pipelog('arg'),R.prop('pipe'))],
@@ -29,11 +28,10 @@ function collectData(obj) {
 }
 
 function contextInjecting(dataPack) {
-  const onlyFirst = R.head
-  let withRefs = Context.insertRefs(dataPack)
+  dataPack.gate = Outfall.gate
   return function(...userArgs) {
-    withRefs.gate.pipe(userArgs)
-    let filled = Context.fillUserData(userArgs,withRefs)
+    dataPack.gate.pipe(userArgs)
+    let filled = Context.fillUserData(userArgs,dataPack)
     let render = collectData(filled.tree)
     return render(...userArgs)
   }
