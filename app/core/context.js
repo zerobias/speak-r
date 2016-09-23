@@ -1,3 +1,4 @@
+"use strict";
 const R = require('ramda')
 
 const util = require('../util')
@@ -8,46 +9,12 @@ const pipelog = util.pipelog('tree')
 const prop = util.prop
 
 const eq = require('../lang/tooling').equals
-const Claim = require('../model/claim')
+const Outfall = require('../model/outfall')
 const HeadList = require('../model/head-list')
 const types = require('../lang/syntax').types
 const Lexeme = require('../model/lexeme')
 
 const chain = func=>o=>o.chain(func)
-function detectContext(context) {
-  if (!context) return R.identity
-
-  let nameIndexMap = new Map(context.map((e,i)=>[e.value,i]))
-  return function(data) {
-    context
-    R
-    S
-    let modClaim = new Claim()
-
-    const modify = e=>{
-      nameIndexMap
-
-      const mapHas = o=>nameIndexMap.has(o)
-      const mapGet = o=>nameIndexMap.get(o)
-      const valuePath = R.lensProp('value')
-      const hasCurrent = P(prop.val,mapHas)
-      let createClaimer = P(mapGet,o=>modClaim.Claimer({index:o,isArg:eq.type.arg(e.value)}).data)
-      const setCurrent = R.over(valuePath,createClaimer)
-      // const isContextOrArg = eq.type.context.arg()
-      // const validate = R.allPass([isContextOrArg,hasCurrent])
-
-
-      const modmod = chain(R.ifElse(hasCurrent,P(setCurrent,S.Right),S.Left))
-      return modmod(e)
-    }
-    // let claimedToken = S.Right({index:-1,type:types.R, value:modClaim.onData})
-    // const addClaimedToken = R.prepend(claimedToken)
-    const modifyRef = R.when(chain(eq.type.context.arg),modify)
-    // const mapMod = P(R.map(modifyRef),addClaimedToken)
-    let res = data
-    return res
-  }
-}
 class IndexMap {
   static get indexation() {
     return R.addIndex(R.map)((e,i)=>R.pair(e.value,i))
@@ -70,15 +37,62 @@ class IndexMap {
     return P(prop.val,has)
   }
 }
+function insertRefs(dataPack) {
+  if (!dataPack.context) return dataPack //Possibly not nessessary
+
+  let tree = dataPack.tree
+  let gate = Outfall.gate
+  const makeAtomic = P(e=>new HeadList([e]),Lexeme.AtomicFunc)
+
+  R
+
+
+  let gateToken = {
+    index:-1,
+    type:types.R,
+    value:gate.pipe}
+  // let gateLexeme = makeAtomic(gateToken)
+  dataPack.gate = gate
+  // dataPack.tree = P(HeadList.prepend(gateLexeme))(tree)
+  return dataPack
+}
+function fillUserData(userData,dataPack) {
+  let indexMap = new IndexMap(dataPack.context)
+  const isArgOrCont = eq.type.arg.context
+  const morpher = HeadList.cyclic(modify)
+  dataPack.tree = morpher(dataPack.tree)
+  function modify(e) {
+
+    if (!isArgOrCont(e)) return e
+    log('ee')(e,isArgOrCont(e))
+    if (!indexMap.hasVal(e))
+      log('ERRRROR!')(e)
+    let argIndex = indexMap.get(e.value)
+    let getArg = userData[argIndex]
+    log('refs')(e.type,argIndex,getArg)
+    e.value = dataPack.gate.Spout(argIndex,eq.type.arg(e)).pipe
+    // return R.when(eq.type.arg,o=>{
+    //   // o.value = o.value()
+    //   return o//makeAtomic(o)
+    // })(e)
+    e.value = getArg
+    return e
+  }
+
+  // dataPack.gate.
+  return dataPack
+}
 function insertClaim(dataPack) {
   if (!dataPack.context) return dataPack //Possibly not nessessary
   let indexMap = new IndexMap(dataPack.context)
   let tree = dataPack.tree
-  let modClaim = new Claim()
-  const modify = e=>{
-    const createClaimer = P(indexMap.get,pipelog('index map'),o=>modClaim.Claimer({
-      index:o,
-      isArg:eq.type.arg(e)}),pipelog('claimer'),util.prop.data,pipelog('claim data'))
+  let stream = Outfall.gate
+  let modify = e=>{
+    const createClaimer = P(
+      indexMap.get,pipelog('index map'),
+      o=>stream.Spout(o,eq.type.arg(e)),
+      pipelog('joint'),
+      R.prop('pipe'),pipelog('joint data'))
     const setCurrent = o=>{
       log('o')(o)
       o.value = createClaimer(o.value)
@@ -90,8 +104,8 @@ function insertClaim(dataPack) {
   }
   const morpher = HeadList.cyclic(modify)
   let claimPipe = P(e=>new HeadList([e]),Lexeme.AtomicFunc)(
-    {index:-1,type:types.R, value:modClaim.onData})
+    {index:-1,type:types.R, value:stream.pipe})
   dataPack.tree = P(morpher,HeadList.prepend(claimPipe))(tree)
   return dataPack
 }
-module.exports = insertClaim
+module.exports = {insertRefs, fillUserData}

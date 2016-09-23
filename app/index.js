@@ -30,7 +30,7 @@ function say(data) {
     Speak)(data)
 }
 
-const pureExample = "indexes data sright :: head prop 'index' append _ @data sright"// _  " //example := //
+const pureExample = "indexes data sright roll :: head prop 'index' append _ @data unnest sright"//@data"// _  " //example := //
 const simple = "when <| == 1 not <|> + 10 |> + 100"
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
@@ -41,9 +41,10 @@ log('example')(pureExample)
 let word = say(pureExample)
 // log('word')(word)
 let indexes = [{index:[1,3]},{index:[0,1,2,3]},0]
-let dat = [0,10,20,30,40,50]
+let dat = [0,5,20,30,40,50]
 let sright = R.objOf('result')
-let res = word(indexes,dat,sright)
+let flipap = R.flip(R.append)
+let res = word(indexes,dat,sright,flipap)
 log('res')(res)
 // word.then(value=>{
 //   let finalRes = value([indexes,dat,sright])

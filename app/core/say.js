@@ -20,7 +20,7 @@ function collectData(obj) {
     // [Lexeme.its.arg,P(R.path(['head','value']),e=>e.arg())],
     [Lexeme.its.pipe,sayPipe],
 
-    [eq.type.arg,P(pipelog('arg'),util.prop.val)],
+    // [eq.type.arg,P(pipelog('arg'),R.prop('pipe'))],
     [Lexeme.its.atomic,sayAtomic],
     [P(HeadList.isList,R.not),util.prop.val],
     [R.T,e=>{throw new CompileException(e)}]
@@ -30,10 +30,12 @@ function collectData(obj) {
 
 function contextInjecting(dataPack) {
   const onlyFirst = R.head
-  let render = collectData(Context(dataPack).tree)
-  let encut = P(onlyFirst,render)
+  let withRefs = Context.insertRefs(dataPack)
   return function(...userArgs) {
-    return render(userArgs)
+    withRefs.gate.pipe(userArgs)
+    let filled = Context.fillUserData(userArgs,withRefs)
+    let render = collectData(filled.tree)
+    return render(...userArgs)
   }
 }
 
