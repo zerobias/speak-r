@@ -131,21 +131,23 @@ function lexemize(data) {
   return lexemizing(data)
 }
 function addArgName(data) {
-  const morph = e=>R.when(eq.type.arg.context(),R.assoc('argName',e.value))(e)
+  const morph = e=>R.when(eq.type.arg.context,R.assoc('argName',e.value))(e)
   const apply = e=>S.Right(morph).ap(e)
   return R.map(apply,data)
 }
 function getSyntaxTree(data) {
-  let splitted = stageHeader(data)
+  // let splitted = stageHeader(data)
   //detectContext(splitted.context)
-  return P(
+  const treePipe = P(
     indexation,tapArr('indexation'),
     addArgName,tapArr('argName'),
       // ,//tapArr('detectContext'),
     eitherToMaybe,//tapArr('toMaybe'),
     lexemize,//tapArr('lexemize'),
     intoPipes
-    )(splitted.data)
+    )
+  const setTree = P(stageHeader,e=>R.assoc('tree',treePipe(e.data),e))
+  return setTree(data)
 }
 
 module.exports = getSyntaxTree

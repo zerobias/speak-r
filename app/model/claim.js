@@ -1,64 +1,54 @@
 const R = require('ramda')
 const util = require('../util')
+const P = util.P
 const log = util.log('model:claim')
+const pipelog = util.pipelog('model:claim')
 class Claimer {
   constructor(config) {
-    this.dataLens = R.lensIndex(config.index)
+    // this.dataLens = R.lensIndex(config.index)
+    this.index = config.index
     this.isArg = config.isArg
     this.value;
   }
   static listener(claim) {
-    return data => {log('listen!')(data); claim.value = R.view(claim.dataLens,data)}
+    return function(data) {
+      claim.value = data[claim.index]
+      return claim
+    }
   }
   get data() {
     let self = this
+    log('this++')(this)
     return function(pipeData) {
+      log('self++')(self.value, pipeData)
       if (self.value)
         return self.isArg
-          ? self.value
+          ? self.value(pipeData)
           : self.value(pipeData)
       else {
-        console.warn('empty Claimer!',self,pipeData)
+        console.warn('empty Claimer!',self,self.value,pipeData)
         return pipeData
-      }
-    }
-  }
-  get pipe() {
-    let self = this
-    return function(pipeData) {
-      if (self.value)
-        return self.value(pipeData)
-      else {
-        console.warn('empty Claimer!',self,pipeData)
-        return pipeData
-      }
-    }
-  }
-  get arg() {
-    let self = this
-    return function() {
-      if (self.value)
-        return self.value
-      else {
-        console.warn('empty Claimer!',self,null)
-        return null
       }
     }
   }
 }
 class Claimed {
   addListener(listenerCb) {
+    log('add listener')(listenerCb)
     this.listeners.push(Claimer.listener(listenerCb))
+    log('listeners')(this.listeners)
   }
   constructor() {
     this.listeners = []
   }
 
   get onData() {
-    let listeners = this.listeners
+    let self = this
     return function(data) {
-      R.unless(R.isEmpty,R.forEach(e=>e(data)))(listeners)
-      return R.head(data)
+      log('data onData')(data)
+      const update = R.forEach(P(pipelog('upd'),e=>e(data).value,pipelog('onData')))
+      R.unless(R.isEmpty,update)(self.listeners)
+      return data
     }
   }
   Claimer(config) {
