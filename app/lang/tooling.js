@@ -7,8 +7,6 @@ const syntax = require('./syntax')
 const types = syntax.types
 const op = syntax.op
 
-const multiCheck = func=>R.map(e=>P(util.arrayify,P(func,R.map)(e),R.anyPass))
-
 const checkToken = type=>val=>R.whereEq({type:type,value:val})
 const checkOper = checkToken(types.op)
 const checkType = R.propEq('type')

@@ -10,7 +10,8 @@ const op = {
   equals:'==',
   plus:'+',
   minus:'-',
-  map:'^'
+  map:'[^]',
+  define:':='
 }
 const types = {
   type:'type',
@@ -20,7 +21,9 @@ const types = {
   op:'operator',
   any:'any',
   context:'context',
-  lex:'lexeme'
+  lex:'lexeme',
+  F:'contextF',
+  arg:'argument'
 }
 const jstypes = [
   ['Array', Array],
@@ -40,6 +43,7 @@ const lexemeTypes = {
   pipe:'Pipe',
   context:'Context',
   atomic:'AtomicFunc',
-  expr:'Expression'
+  expr:'Expression',
+  arg:'Argument'
 }
 module.exports = {op,types,quotes,categories,jstypes,lexemeTypes}

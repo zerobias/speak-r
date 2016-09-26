@@ -1,13 +1,13 @@
 const R = require('ramda')
-const S = require('sanctuary')
 
 const util = require('./util')
+const S = util.S
 
 const P = util.P
 const log = util.log('tree')
 // const pipelog = util.pipelog('tree')
 
-const HeadList = require('./head-list.js')
+const HeadList = require('./model/head-list')
 
 class Print {
   static _indexTag(tag) {

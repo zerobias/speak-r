@@ -1,16 +1,16 @@
 const R = require('ramda')
-const S = require('sanctuary')
 
-const util = require('./util')
+const util = require('../util')
+const S = util.S
 
 const P = util.P
 const log = util.log('tree')
 const pipelog = util.pipelog('tree')
 
-const HeadList = require('./head-list.js')
-const Lexeme = require('./lexeme.js')
+const HeadList = require('../model/head-list')
+const Lexeme = require('../model/lexeme')
 
-const tool = require('./lang/tooling')
+const tool = require('../lang/tooling')
 
 
 const eqOp = tool.eq.op
@@ -49,22 +49,25 @@ function optimise(data) {
   const singlePipeToAtomic = R.when(R.both(Lexeme.its.pipe,P(HeadList.hasTail,R.not)),util.prop.head)
   return P(exprToPipe,singlePipeToAtomic)(data)
 }
-const appendTo = obj=>e=>obj.append(e)
 function Stack() {
+  const appendTo = obj=>e=>obj.append(e)
   this.value = []
   this.push = obj=>this.value.push(appendTo(obj))
   this.pushLast = result=>this.push(HeadList.lastR(result,true))
   this.pop = ()=>this.value.pop()
   this.addToLast = val=>R.last(this.value)(val)
 }
-function convolve(data) {
+
+function convolve(dataPack) {
+  let data = dataPack.tree
   if (!R.is(Array,data)) return S.Left('No array recieved')
-  var result = HeadList.emptyList()
+  let result = HeadList.emptyList()
   let stack = new Stack()
   let state = states.empty
-  let i = 0
-  while(i<data.length) {
-    var e = data[i]
+  let i = 0,
+      len = data.length
+  while(i<len) {
+    let e = data[i++]
     let nextState = stConds(e)
     let doAction = switches[state][nextState]
     switch(doAction) {
@@ -77,9 +80,10 @@ function convolve(data) {
     }
     state = nextState
     stack.addToLast(optimise(e))
-    i++
   }
-  return P(Lexeme.Pipe,optimise)(result)
+  dataPack.tree = P(Lexeme.Pipe,optimise)(result)
+
+  return dataPack
 }
 
 module.exports = convolve

@@ -1,7 +1,7 @@
 const R = require('ramda')
-const S = require('sanctuary')
 
-const util = require('./util')
+const util = require('../util')
+const S = util.S
 
 const P = util.P
 
@@ -15,9 +15,11 @@ class HeadList {
       this.head = head
       this.tail = rawList||[]
     }
-  }
-  map(func) {
-    return R.map(func,this.toArray)
+    this[Symbol.iterator] = function* () {
+      yield this.head
+      for (let e of this.tail)
+        yield e
+    }
   }
   get toArray() {
     return R.prepend(this.head,this.tail)
@@ -31,6 +33,22 @@ class HeadList {
     else
       this.tail.push(e)
     return this
+  }
+  static get prepend() {
+    return R.curry((val,list)=>{
+      list.tail = R.prepend(list.head, list.tail)
+      list.head = val
+      return list
+    })
+  }
+  static cyclic(func) {
+    return function(list) {
+      for(let e of list)
+        e = P(R.when(
+          HeadList.isList,
+          HeadList.cyclic(func)),func)(e)
+      return list
+    }
   }
 
   static hasTail(list) {return R.has('tail',list)&&!R.isEmpty(list.tail)}

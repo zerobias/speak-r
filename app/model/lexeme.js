@@ -1,6 +1,6 @@
 const R = require('ramda')
 
-const lexemeTypes = require('./lang/syntax').lexemeTypes
+const lexemeTypes = require('../lang/syntax').lexemeTypes
 
 class ILexeme {
   constructor(typename,obj) {
@@ -18,6 +18,9 @@ class Lexeme {
   }
   static Expression(tokensHList) {
     return new ILexeme(lexemeTypes.expr,tokensHList)
+  }
+  static Argument(tokensHList) {
+    return new ILexeme(lexemeTypes.arg,tokensHList)
   }
   static get its() {
     const eq = R.propEq('lexeme')
