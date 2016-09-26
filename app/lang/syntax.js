@@ -10,7 +10,7 @@ const op = {
   equals:'==',
   plus:'+',
   minus:'-',
-  map:'^',
+  map:'[^]',
   define:':='
 }
 const types = {

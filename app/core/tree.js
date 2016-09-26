@@ -26,16 +26,6 @@ const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(tag+' '+i)(o)))
 
 // const isTokenCat = tokenArray=>P(prop.type,util.isContainOrEq(tokenArray))
 
-
-const filterM = func=>e=>e.filter(func)
-const filterMs = func=>P(R.map(filterM(func)),S.justs)
-// const indexOf = e => e.isJust ? e.value.index : NaN
-// const rangeMs = (min,max)=>R.map(R.reject(e=>indexOf(R.either(R.gt(max),R.lt(min)))))
-
-//TODO make isSymbol and other work through R.whereEq
-// const isSymbol = tokenPred => R.allPass([isOperator, propEqVal(tokenPred)])
-// const eq.op = R.map(isSymbol,op)
-
 const eitherToMaybe = R.map(S.eitherToMaybe)
 
 function indexation(data) {
@@ -49,8 +39,10 @@ const check =func=> e=>R.both(S.isRight,valEq(true))(S.lift(func,e))
 function stageHeader(data) {
   const eiSplitOn = func=>P(R.splitWhen(check(func)), R.adjust(R.tail,1))
 
-  const splitContext = eiSplitOn(eq.op.doubledots)
-  const splitDefine = eiSplitOn(eq.op.define)
+  const split = {
+    context:eiSplitOn(eq.op.doubledots),
+    define:eiSplitOn(eq.op.define)
+  }
   const writeField = (field,obj)=>res=>{
     if (R.isEmpty(res[1])) {
       obj[field] = false
@@ -61,22 +53,23 @@ function stageHeader(data) {
     }
   }
   let props = {}
-  let res = P(splitDefine,writeField('define',props),splitContext,writeField('context',props))
+  let res = P(split.define,writeField('define',props),split.context,writeField('context',props))
   props.data = res(data)
   return props
 }
-const replacer = (type,value)=>e=>{
-  e.value = value
-  e.type = type
-  return e
-}
 
 function headSplitter(isMaster,onMaster,changeLast) {
-  const lensLast = RP.do.length.dec.lensIndex.exec
+  const lensLast = RP().length.dec.lensIndex.run
   const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
-  const onSlave = e=>list=>R.ifElse(R.isEmpty,
-    onEmpty(e),
-    R.over(lensLast(list),changeLast(e)))(list)
+  const onSlave =
+    e=>list=>
+        R.ifElse(
+          R.isEmpty,
+          onEmpty(e),
+          R.over(
+            lensLast(list),
+            changeLast(e)
+          ))(list)
   const tranducer = R.map(R.ifElse(isMaster,onMaster,onSlave))
   return R.transduce(tranducer,(acc,val)=>val(acc))
 }
@@ -106,6 +99,11 @@ function checkReplace(data) {
     [eq.op.minus,types.R,R.subtract],
     [eq.op.map,types.R,R.map]
   ]
+  const replacer = (type,value)=>e=>{
+    e.value = value
+    e.type = type
+    return e
+  }
   const doCheckReplace = (checker,type,value)=>R.map(R.when(checker,replacer(type,value)))
   const reducer = (acc,val)=>R.apply(doCheckReplace,val)(acc)
   const doReplaceAll = rules=>data=>R.reduce(reducer,data,rules)
@@ -114,15 +112,12 @@ function checkReplace(data) {
 }
 const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
 function lexemize(data) {
-  const headlistFab  = e=>new HeadList([e])
   const detectAtomic = R.when(P(prop.head,eq.type.R.context),Lexeme.AtomicFunc)
   const detectExpr   = R.when(P(prop.head,eq.type.op),Lexeme.Expression)
-  const detectArg       = R.over(R.lensProp('tail'),R.map(R.when(eq.type.arg,P(headlistFab,Lexeme.Argument))))
   const detecting = P(
     e=>new HeadList(e),
     detectAtomic,
     detectExpr,taplog('detectExpr ')
-    // detectArg,taplog('detectArg->')
     )
   const lexemizing = P(
     S.lift(checkReplace),tapArr('checkReplace'),
@@ -136,13 +131,10 @@ function addArgName(data) {
   return R.map(apply,data)
 }
 function getSyntaxTree(data) {
-  // let splitted = stageHeader(data)
-  //detectContext(splitted.context)
   const treePipe = P(
     indexation,tapArr('indexation'),
     addArgName,tapArr('argName'),
-      // ,//tapArr('detectContext'),
-    eitherToMaybe,//tapArr('toMaybe'),
+    eitherToMaybe,
     lexemize,//tapArr('lexemize'),
     intoPipes
     )
@@ -151,3 +143,23 @@ function getSyntaxTree(data) {
 }
 
 module.exports = getSyntaxTree
+
+
+// var ex = `marked handler defObj :: if <== is Array <- [^] <| propOr @defObj 'value' assoc 'mark' @marked ] <- handler 'notList'`
+
+
+// function listMark(marked, handler, defObj) {
+//   return function(data) {
+//     var result
+//     if (R.is(Array,data)) {
+//       result = data.map(function(e){
+//         var prop = e.value || defObj
+//         prop.mark = marked
+//         return prop
+//       })
+//     } else {
+//       result = handler('notList',data)
+//     }
+//     return result
+//   }
+// }

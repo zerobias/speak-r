@@ -38,7 +38,7 @@ class IndexMap {
   }
 }
 function fillUserData(userData,dataPack) {
-  let indexMap = new IndexMap(dataPack.context)
+  let indexMap = new IndexMap(dataPack.context||[]) //TODO create dataPack.context as empty array
   const isArgOrCont = eq.type.arg.context
   const morpher = HeadList.cyclic(modify)
   dataPack.tree = morpher(dataPack.tree)

@@ -11,21 +11,27 @@ const isString = util.isString
 // const log = util.log('fabric')
 // const pipelog = util.pipelog('fabric')
 
-const TokenFabric = (tokenType, condition, transformation) => {
+function TokenFabric(tokenType, condition, transformation) {
   const onCondition = P(util.arrayify, R.allPass, S.either(R.__, R.F))
-  const addSteps = R.flip(R.concat)([tokenType, S.Right])
+  const appendArray = R.flip(R.concat)
+  const addSteps = appendArray([tokenType, S.Right])
   const transformUntouched = P(
-    R.defaultTo([]),
+    R.tap(e=>{
+      R
+      util
+      //console.log('step 0',e)
+      return e
+    }),
     util.arrayify,
     addSteps,
-    util.toPipe,
-    S.either(R.__, R.identity))
+    e=>util.P(...e),//TODO implement this feature in P
+    e=>S.either(e, R.identity))
   return R.when(onCondition(condition), transformUntouched(transformation))
 }
 
 const quoteProcessor = function () {
   const isQuote = R.anyPass(R.map(R.equals, syntax.quotes))
-  const isQuoted = R.allPass(R.map(e => P(e, isQuote), [R.head, R.last]))
+  const isQuoted = R.allPass([P(R.head, isQuote), P(R.last, isQuote)])
   const removeQuotes = P(R.init, R.tail)
   return TokenFabric(Token.String, [isString, isQuoted], [R.trim, removeQuotes])
 }

@@ -27,7 +27,7 @@ function collectData(obj) {
   return collect(obj)
 }
 
-function contextInjecting(dataPack) {
+function injectContext(dataPack) {
   dataPack.gate = Outfall.gate
   return function(...userArgs) {
     dataPack.gate.pipe(userArgs)
@@ -43,13 +43,20 @@ function sayPipe(list) {
 }
 
 function sayAtomic(list) {
+  const applyTailToHead =
+    ()=>R.apply(
+      collectData(list.head),
+      R.map(collectData,list.tail))
   return HeadList.hasTail(list)
-    ? R.apply(collectData(list.head),R.map(collectData,list.tail))
+    ? applyTailToHead()
     : collectData(list.head)
 }
 
 function say(dataPack) {
-  return contextInjecting(dataPack)
+  return injectContext(dataPack)
 }
+
+say.sayPipe = sayPipe
+say.collectData = collectData
 
 module.exports = say
