@@ -27,16 +27,6 @@ function collectData(obj) {
   return collect(obj)
 }
 
-function injectContext(dataPack) {
-  dataPack.gate = Outfall.gate
-  return function(...userArgs) {
-    dataPack.gate.pipe(userArgs)
-    let filled = Context.fillUserData(userArgs,dataPack)
-    let render = collectData(filled.tree)
-    return render(...userArgs)
-  }
-}
-
 function sayPipe(list) {
   const normalize = R.when(HeadList.isList,R.prop('toArray'))
   return P(normalize,R.map(collectData),R.apply(R.pipe))(list)
@@ -52,8 +42,38 @@ function sayAtomic(list) {
     : collectData(list.head)
 }
 
-function say(dataPack) {
-  return injectContext(dataPack)
+const contextArgs = P(
+  R.when(R.equals(false),()=>[]),
+  R.when(
+    util.isof.Empty,
+    R.append({type:'fakeContext',value:'data'})),
+  R.map(util.prop.val))
+
+function Runner (dataPack) {
+  let obj = function(...userArgs) {
+    dataPack.gate.pipe(userArgs)
+    let filled = Context.fillUserData(userArgs,dataPack)
+    let render = collectData(filled.tree)
+    return render(...userArgs)
+  }
+  Object.defineProperty(obj,'data',{
+    value:dataPack
+  })
+  Object.defineProperty(obj,'source',{get:
+    function() { return obj.data.source }
+  })
+  Object.defineProperty(obj,'args',{get:
+    function() { return contextArgs(obj.data.context) }
+  })
+  return obj
+}
+
+function say(sourceString) {
+  return function(dataPack) {
+    dataPack.source = sourceString
+    dataPack.gate = Outfall.gate
+    return new Runner(dataPack)
+  }
 }
 
 say.sayPipe = sayPipe

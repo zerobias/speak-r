@@ -83,7 +83,10 @@ function intoAtomics(data) {
 }
 function intoPipes(data) {
   const changeLast = e=>hList=>hList.append(e)
-  const pipeSymbols = eq.op.forwardpipe.middlepipe.backpipe
+  const pipeSymbols = eq.op
+    .forwardpipe
+    .middlepipe
+    .backpipe
   const isMaster = R.both(HeadList.isList,P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
 
@@ -105,15 +108,14 @@ function checkReplace(data) {
     return e
   }
   const doCheckReplace = (checker,type,value)=>R.map(R.when(checker,replacer(type,value)))
-  const reducer = (acc,val)=>R.apply(doCheckReplace,val)(acc)
-  const doReplaceAll = rules=>data=>R.reduce(reducer,data,rules)
-  const replAll = doReplaceAll(replacers)
-  return replAll(data)
+  const reducer = (acc,val)=>doCheckReplace(...val)(acc)
+  return R.reduce(reducer,data,replacers)
 }
 const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
 function lexemize(data) {
-  const detectAtomic = R.when(P(prop.head,eq.type.R.context),Lexeme.AtomicFunc)
-  const detectExpr   = R.when(P(prop.head,eq.type.op),Lexeme.Expression)
+  const whenHeadIsDo = (cond,action)=>R.when(P(prop.head,cond),action)
+  const detectAtomic = whenHeadIsDo(eq.type.R.context , Lexeme.AtomicFunc)
+  const detectExpr   = whenHeadIsDo(eq.type.op , Lexeme.Expression)
   const detecting = P(
     e=>new HeadList(e),
     detectAtomic,
@@ -143,23 +145,3 @@ function getSyntaxTree(data) {
 }
 
 module.exports = getSyntaxTree
-
-
-// var ex = `marked handler defObj :: if <== is Array <- [^] <| propOr @defObj 'value' assoc 'mark' @marked ] <- handler 'notList'`
-
-
-// function listMark(marked, handler, defObj) {
-//   return function(data) {
-//     var result
-//     if (R.is(Array,data)) {
-//       result = data.map(function(e){
-//         var prop = e.value || defObj
-//         prop.mark = marked
-//         return prop
-//       })
-//     } else {
-//       result = handler('notList',data)
-//     }
-//     return result
-//   }
-// }

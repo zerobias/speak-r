@@ -16,12 +16,6 @@ function TokenFabric(tokenType, condition, transformation) {
   const appendArray = R.flip(R.concat)
   const addSteps = appendArray([tokenType, S.Right])
   const transformUntouched = P(
-    R.tap(e=>{
-      R
-      util
-      //console.log('step 0',e)
-      return e
-    }),
     util.arrayify,
     addSteps,
     e=>util.P(...e),//TODO implement this feature in P

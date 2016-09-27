@@ -1,7 +1,7 @@
 const R = require('ramda')
-const tap = require('tape')
+const tap = require('tap').test
 // const debug = require('debug')('splitter test')
-var tested
+var tested = require('../app/core/splitter')
 
 const example ="prepend <| take 2 <|> equals 'word' |> apply <| ifElse"
 

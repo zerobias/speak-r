@@ -26,11 +26,11 @@ function say(data) {
     preproc,mapprint('preproc')
     ,getTree,maptaphead('getTree')
     ,convolve,taplog('conv')
-    ,Speak
+    ,Speak(data)
     )(data)
 }
 
-const pureExample = "indexes data sright :: head prop 'index' append <| _ <|> @data |> unnest sright"
+const pureExample = "indexes data sright :: head prop 'index' concat @data sright"
 const simple = "when <| == 1 not <|> + 10 |> + 100"
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 

@@ -6,7 +6,6 @@ const Token = require('../model/token')
 const log = util.pipelog('splitter')
 const operators = R.values(require('../lang/syntax').op) //TODO rewrite op list using
 
-const toPipe = P.toPipe
 const stringMorpher = morph=>R.map(R.when(util.isof.String,morph))
 const stringTrim = stringMorpher(R.trim)
 const rejectEmpty = R.reject(R.isEmpty)
@@ -32,16 +31,16 @@ const splitsPipe = [
   R.of,
   R.ap(opersFuncs),
   R.concat(R.__,constFuncs),
-  toPipe,
+  P,
   splitCond,
   R.map,
   unnester,
   log('splitPipe')]
-const splitter = P(toPipe,R.map(R.__,operators),toPipe)(splitsPipe)
+const splitter = P(P,R.map(R.__,operators),P)(splitsPipe)
 const cleaner = P(R.unnest,stringTrim,rejectEmpty,log('end'))
 const execFuncs = [
   util.arrayify,
   splitter,
   cleaner]
-const exec = toPipe(execFuncs)
+const exec = P(execFuncs)
 module.exports = {exec,cleaner}

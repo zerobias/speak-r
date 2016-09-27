@@ -1,9 +1,11 @@
 import commonjs from 'rollup-plugin-commonjs'
 import nodeResolve from 'rollup-plugin-node-resolve'
 import cleanup from 'rollup-plugin-cleanup'
-import buble from 'rollup-plugin-buble'
+// import buble from 'rollup-plugin-buble'
+import multiEntry from 'rollup-plugin-multi-entry'
 import uglify from 'rollup-plugin-uglify'
 import { minify } from 'uglify-js'
+import babel from 'rollup-plugin-babel'
 
 let pkg = require('./package.json')
 let external = Object.keys(pkg.dependencies)
@@ -19,20 +21,27 @@ const targets = {
   }],
   esnext:[{
     dest: pkg['jsnext:main'],
-    format: 'es',
+    format: 'umd',
     moduleName: 'speaker',
     sourceMap: true
   }]
 }
 
 export default {
-  entry: 'app/index.js',
+  entry: isES5Build
+    ? ['babel-polyfill','app/index.js']
+    : 'app/index.js',
   globals: {
     "ramda": "R",
     "sanctuary": "sanctuary",
     "debug": "debug"
   },
   plugins: [
+    isES5Build
+      ? multiEntry({ exports: false })
+      : '',
+    cleanup(),
+
     nodeResolve({
       jsnext: true,
       main: false,
@@ -45,11 +54,16 @@ export default {
       // exclude: ['node_modules/**'] //'node_modules/**',
       // namedExports: { './module.js': ['foo', 'bar' ] }  // Default: undefined
     }),
-    cleanup(),
     isES5Build
-      ? buble() :'',
-    isES5Build
-      ? uglify({}, minify) :''
+      //? buble()
+      ? babel({
+        exclude: 'node_modules/**',
+        runtimeHelpers: true
+      })
+      :'',
+
+    // isES5Build
+    //   ? uglify({}, minify) :''
   ],
   external: external,
   targets: isES5Build?targets.es5:targets.esnext
