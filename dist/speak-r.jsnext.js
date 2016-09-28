@@ -115,41 +115,24 @@ module.exports = ()=>RP.do
 
 var pipefy = createCommonjsModule(function (module) {
 const R = require$$0
-class Red {
-  static add(acc,val) {
-    return R.append(val,acc)
-  }
-  static forget(acc) {
-    return acc
-  }
-  constructor(reducer,acc=Red.add) {
-    return R.transduce(reducer,acc,[])
-  }
-  static ucer(...reducers) {
-    return new Red(R.compose(...reducers))
-  }
-}
-const _filter = R.compose(
-    R.flatten,
-    R.map(R.when(R.is(Array),R.map(_P))),
-    R.filter(R.is(Function))
+const red = func => R.reduce(func,[])
+const reducer = red(logic)
+const ifArr = R.pipe(
+  R.flatten,
+  reducer,
+  R.flip(R.concat)
 )
-const tr = new Red()
-const accum = R.ifElse(R.is(Array),R.flip(R.concat),Red.add)
-function _P(...pipes) {
-  let filtered = _filter(pipes)
-  return R.pipe(...filtered)
+function logic(acc,val) {
+  if (R.is(Array)(val))
+    return ifArr(val)(acc)
+  else
+    return R.append(val,acc)
 }
-const filtP = R.either(R.is(Array),R.is(Function))
-const P = new Red(R.filter(filtP),R.check)
-function _P2(pipe1,pipe2,data) {
-  return pipe2(pipe1(data))
+function P(...data) {
+  let actionList = reducer(data)
+  return R.pipe(...actionList)
 }
-const P2 = R.curry(_P2)
-Object.defineProperty(_P,'P2',{value:P2})
-Object.defineProperty(_P,'Red',{value:Red})
-Object.defineProperty(_P,'toPipe',{value:funcs=>R.pipe(...funcs)})
-module.exports = _P
+module.exports = P
 });
 
 var util = createCommonjsModule(function (module) {
@@ -203,7 +186,7 @@ function TokenFabric(tokenType, condition, transformation) {
   const transformUntouched = P(
     util$$1.arrayify,
     addSteps,
-    e=>util$$1.P(...e),
+    P,
     e=>S.either(e, R.identity))
   return R.when(onCondition(condition), transformUntouched(transformation))
 }
@@ -249,7 +232,6 @@ const P = util$$1.P
 const Token = token
 const log = util$$1.pipelog('splitter')
 const operators = R.values(syntax.op)
-const toPipe = P.toPipe
 const stringMorpher = morph=>R.map(R.when(util$$1.isof.String,morph))
 const stringTrim = stringMorpher(R.trim)
 const rejectEmpty = R.reject(R.isEmpty)
@@ -272,18 +254,18 @@ const splitsPipe = [
   R.of,
   R.ap(opersFuncs),
   R.concat(R.__,constFuncs),
-  toPipe,
+  P,
   splitCond,
   R.map,
   unnester,
   log('splitPipe')]
-const splitter = P(toPipe,R.map(R.__,operators),toPipe)(splitsPipe)
+const splitter = P(P,R.map(R.__,operators),P)(splitsPipe)
 const cleaner = P(R.unnest,stringTrim,rejectEmpty,log('end'))
 const execFuncs = [
   util$$1.arrayify,
   splitter,
   cleaner]
-const exec = toPipe(execFuncs)
+const exec = P(execFuncs)
 module.exports = {exec,cleaner}
 });
 
@@ -626,7 +608,7 @@ function checkReplace(data) {
 }
 const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
 function lexemize(data) {
-  const whenHeadIsDo = (cond,action)=>R.when(P.P2(prop.head,cond),action)
+  const whenHeadIsDo = (cond,action)=>R.when(P(prop.head,cond),action)
   const detectAtomic = whenHeadIsDo(eq.type.R.context , Lexeme.AtomicFunc)
   const detectExpr   = whenHeadIsDo(eq.type.op , Lexeme.Expression)
   const detecting = P(
@@ -787,7 +769,6 @@ module.exports = Outfall
 });
 
 var context = createCommonjsModule(function (module) {
-"use strict";
 const R = require$$0
 const util$$1 = util
 const P = util$$1.P
@@ -940,7 +921,7 @@ function say$$1(data) {
     ,Speak(data)
     )(data)
 }
-const pureExample = "indexes data sright :: head prop 'index' append <| _ <|> @data |> unnest sright"
+const pureExample = "indexes data sright :: head prop 'index' concat @data sright"
 const simple = "when <| == 1 not <|> + 10 |> + 100"
 log('example')(pureExample)
 let word = say$$1(pureExample)

@@ -1,4 +1,3 @@
-"use strict";
 const R = require('ramda')
 
 const util = require('../util')

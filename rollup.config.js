@@ -5,7 +5,7 @@ import cleanup from 'rollup-plugin-cleanup'
 import multiEntry from 'rollup-plugin-multi-entry'
 import uglify from 'rollup-plugin-uglify'
 import { minify } from 'uglify-js'
-import babel from 'rollup-plugin-babel'
+// import babel from 'rollup-plugin-babel'
 
 let pkg = require('./package.json')
 let external = Object.keys(pkg.dependencies)
@@ -29,7 +29,7 @@ const targets = {
 
 export default {
   entry: isES5Build
-    ? ['babel-polyfill','app/index.js']
+    ? ['babel-polyfill', 'dist/es5/index.js']
     : 'app/index.js',
   globals: {
     "ramda": "R",
@@ -38,10 +38,9 @@ export default {
   },
   plugins: [
     isES5Build
-      ? multiEntry({ exports: false })
+      ? multiEntry({ exports: true })
       : '',
     cleanup(),
-
     nodeResolve({
       jsnext: true,
       main: false,
@@ -50,21 +49,18 @@ export default {
       preferBuiltins: false
     }),
     commonjs({
-      include: ['app/**'],
+      include: [isES5Build
+        ? 'dist/es5/**'
+        : 'app/**'],
       // exclude: ['node_modules/**'] //'node_modules/**',
       // namedExports: { './module.js': ['foo', 'bar' ] }  // Default: undefined
     }),
     isES5Build
-      //? buble()
-      ? babel({
-        exclude: 'node_modules/**',
-        runtimeHelpers: true
-      })
-      :'',
-
-    // isES5Build
-    //   ? uglify({}, minify) :''
+      ? uglify({}, minify)
+      :''
   ],
   external: external,
-  targets: isES5Build?targets.es5:targets.esnext
+  targets: isES5Build
+    ? targets.es5
+    : targets.esnext
 }

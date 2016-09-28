@@ -18,7 +18,7 @@ function TokenFabric(tokenType, condition, transformation) {
   const transformUntouched = P(
     util.arrayify,
     addSteps,
-    e=>util.P(...e),//TODO implement this feature in P
+    P,
     e=>S.either(e, R.identity))
   return R.when(onCondition(condition), transformUntouched(transformation))
 }
