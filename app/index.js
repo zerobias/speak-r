@@ -30,8 +30,8 @@ function say(data) {
     )(data)
 }
 
-const pureExample = "indexes data sright :: head prop 'index' concat @data sright"
-const simple = "when <| == 1 not <|> + 10 |> + 100"
+const pureExample = "indexes data sright :: head prop 'index' concat @data append 42 sright"
+const simple = "when [ == 1 not , + 10 ] + 100"
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
 // let convolved = say(pureExample)
@@ -44,6 +44,8 @@ let dat = [0,5,20,30,40,50]
 let sright = R.objOf('result')
 // let flipap = R.flip(R.append)
 let res = word(indexes,dat,sright)
+// let res = word(1)
+
 log('res')(res)
 
 module.exports = say

@@ -17,7 +17,7 @@ let result = pipe(1)
 
 ```js
 const say = require('speaker')
-const pipe = say("when <| == 1 <|> + 10 |> objOf 'value'")
+const pipe = say("when [ == 1 , + 10 ] objOf 'value'")
 
 let result = pipe(1)
 //=> { value: 11 }

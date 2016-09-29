@@ -269,15 +269,92 @@ const exec = P(execFuncs)
 module.exports = {exec,cleaner}
 });
 
+var error = createCommonjsModule(function (module) {
+const R = require$$0
+const util$$1 = util
+const isof = util$$1.isof
+const P = util$$1.P
+function CustomError(message,data) {
+  this.name = "CustomError"
+  this.message = join.msg([message,data])
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, this.constructor)
+  } else {
+    this.stack = (new Error()).stack
+  }
+}
+CustomError.prototype = Object.create(Error.prototype)
+CustomError.prototype.constructor = CustomError
+const join = {
+  msg:R.join(': '),
+  newline:R.join('\n'),
+  space:R.join(' '),
+  clear:R.join(''),
+  comma:R.join(', ')
+}
+const keyValJoint = P(
+  R.map(P(
+    R.toPairs,
+    R.map(join.msg),
+    join.comma,
+    e=>join.space(['{',e,'}']))),
+  join.newline)
+const countsMessage = message=>data=>R.ifElse(e=>e.length>1,()=>message+'s',()=>message)(data)
+class TokenError extends CustomError {
+  static get message() {
+    return countsMessage(`unknown token`)
+  }
+  constructor(data) {
+    super(TokenError.message(data), (data))
+    this.name = "TokenError"
+  }
+}
+class ArgumentsTypeError extends CustomError {
+  static get message() {
+    return countsMessage(`call non-function argument`)
+  }
+  constructor(data) {
+    super(ArgumentsTypeError.message(data), keyValJoint(data))
+    this.name = "ArgumentsTypeError"
+  }
+}
+class LexicError extends CustomError {
+  static get message() {
+    return P(
+      R.converge(R.of,[R.pluck('error'),R.pluck('data')]),
+      R.map(join.comma))
+  }
+  constructor(data) {
+    super(LexicError.message(data), keyValJoint(R.pluck('data',data)))
+    this.name = "LexicError"
+  }
+}
+function errorCheck(Err) {
+  return function(data) {
+    let failed = util$$1.S.lefts(data)
+    if (!R.isEmpty(failed))
+      throw new Err(failed)
+  }
+}
+CustomError.Throw = {
+  Token:errorCheck(TokenError),
+  Args:e=>{throw new ArgumentsTypeError(e)},
+  Lexic:errorCheck(LexicError)
+}
+module.exports = CustomError
+});
+
 var stringPreprocess = createCommonjsModule(function (module) {
 const R = require$$0
 const fab = fabric
 const splitter$$1 = splitter
 const util$$1 = util
+const P = util$$1.P
 const S = util$$1.S
+const Err = error
 const pipelog = util$$1.pipelog('preproc')
 const singleWordParsing =
-  R.pipe(
+  P(
     fab.preprocess,
     pipelog('->isQuote'),
     fab.isQuote,
@@ -295,7 +372,7 @@ const singleWordParsing =
     fab.postprocess)
 function splitKeywords(data) {
   const err = R.unless(util$$1.isString, () => { throw new Error('`keywords` should be String'); })
-  const beforeSplit = R.pipe(
+  const beforeSplit = P(
     err,
     R.split(' '),
     R.reject(R.isEmpty))
@@ -306,23 +383,103 @@ function splitKeywords(data) {
     R.eqProps('obj',R.__,b)
   ])(a)
   const drops = R.dropRepeatsWith(_drops)
-  let un = R.unary(R.pipe(
+  let un = P(
     beforeSplit,
     splitter$$1.exec,
     sSort,
     pipelog('тэг'),
     R.map(singleWordParsing),
     drops
-  ))
-  fab
-  return un(data)
+  )
+  let splitted = un(data)
+  Err.Throw.Token(splitted)
+  return splitted
 }
 module.exports = splitKeywords
+});
+
+var headList = createCommonjsModule(function (module) {
+const R = require$$0
+const util$$1 = util
+const S = util$$1.S
+const P = util$$1.P
+const isof = util$$1.isof
+class HeadList {
+  constructor(rawData) {
+    const list = util$$1.arrayify(rawData)
+    this.head = R.head(list) || {}
+    this.tail = R.tail(list)
+  }
+  get toArray() {
+    return R.prepend(this.head,this.tail)
+  }
+  *[Symbol.iterator]() {
+    yield this.head
+    for (let e of this.tail)
+      yield e
+  }
+  get length() {
+    return R.converge(R.add,[
+      R.pathOr(0,['tail','length']),
+      P(R.prop('head'),R.isNil,e=>e ? 0 : 1)])
+  }
+  append(e) {
+    if (HeadList.isEmpty(this))
+      this.head = e
+    else
+      this.tail.push(e)
+    return this
+  }
+  static create(e) {
+    return new HeadList(e)
+  }
+  static get prepend() {
+    return R.curry((val,list)=>{
+      list.tail = R.prepend(list.head, list.tail)
+      list.head = val
+      return list
+    })
+  }
+  static cyclic(func) {
+    return function(list) {
+      for(let e of list)
+        e = P(R.when(
+          HeadList.isList,
+          HeadList.cyclic(func)),func)(e)
+      return list
+    }
+  }
+  static isEmpty(list) {
+    return !HeadList.hasTail(list)&&R.isEmpty(list.head)
+  }
+  static get hasTail() {
+    return R.both(R.has('tail'),P(R.prop('tail'),isof.Full))
+  }
+  static last(list) {
+    return HeadList.hasTail(list)
+      ? R.last(list.tail)
+      : list.head
+  }
+  static lastR(list,isStrict=false) {
+    const _hasTail = R.has('tail')
+    const notHas = P(_hasTail,R.not)
+    const cond = R.either(notHas,P(HeadList.last,notHas))
+    return R.until(isStrict?cond:notHas,HeadList.last)(list)
+  }
+  static emptyList() {
+    return new HeadList()
+  }
+  static isList(list) {
+    return R.has('head',list)
+  }
+}
+module.exports = HeadList
 });
 
 var lexeme = createCommonjsModule(function (module) {
 const R = require$$0
 const lexemeTypes = syntax.lexemeTypes
+const HeadList = headList
 class ILexeme {
   constructor(typename,obj) {
     obj.index = obj.head.index
@@ -331,8 +488,8 @@ class ILexeme {
   }
 }
 class Lexeme {
-  static Pipe(tokensHList) {
-    return new ILexeme(lexemeTypes.pipe,tokensHList)
+  static Pipe(tokensList) {
+    return new ILexeme(lexemeTypes.pipe,tokensList)
   }
   static AtomicFunc(tokensHList) {
     return new ILexeme(lexemeTypes.atomic,tokensHList)
@@ -352,78 +509,6 @@ class Lexeme {
   }
 }
 module.exports = Lexeme
-});
-
-var headList = createCommonjsModule(function (module) {
-const R = require$$0
-const util$$1 = util
-const S = util$$1.S
-const P = util$$1.P
-class HeadList {
-  constructor(rawList, head) {
-    if (!R.is(Array,rawList)||R.isEmpty(rawList)) return S.Left('No array recieved')
-    if (R.isNil(head)) {
-      this.head = R.head(rawList)
-      this.tail = R.tail(rawList)
-    } else {
-      this.head = head
-      this.tail = rawList||[]
-    }
-    this[Symbol.iterator] = function* () {
-      yield this.head
-      for (let e of this.tail)
-        yield e
-    }
-  }
-  get toArray() {
-    return R.prepend(this.head,this.tail)
-  }
-  get length() {
-    return R.defaultTo(0,this.tail.length)+R.isEmpty(this.head)?0:1
-  }
-  append(e) {
-    if (R.isEmpty(this.tail)&&R.isEmpty(this.head))
-      this.head = e
-    else
-      this.tail.push(e)
-    return this
-  }
-  static get prepend() {
-    return R.curry((val,list)=>{
-      list.tail = R.prepend(list.head, list.tail)
-      list.head = val
-      return list
-    })
-  }
-  static cyclic(func) {
-    return function(list) {
-      for(let e of list)
-        e = P(R.when(
-          HeadList.isList,
-          HeadList.cyclic(func)),func)(e)
-      return list
-    }
-  }
-  static hasTail(list) {return R.has('tail',list)&&!R.isEmpty(list.tail)}
-  static last(list) {
-    return HeadList.hasTail(list)
-      ? R.last(list.tail)
-      : list.head
-  }
-  static lastR(list,isStrict=false) {
-    const _hasTail = R.has('tail')
-    const notHas = P(_hasTail,R.not)
-    const cond = R.either(notHas,P(HeadList.last,notHas))
-    return R.until(isStrict?cond:notHas,HeadList.last)(list)
-  }
-  static emptyList() {
-    return new HeadList([{}])
-  }
-  static isList(list) {
-    return R.has('head',list)
-  }
-}
-module.exports = HeadList
 });
 
 var tooling = createCommonjsModule(function (module) {
@@ -512,6 +597,148 @@ class Print {
 module.exports = Print
 });
 
+var doubleLinked = createCommonjsModule(function (module) {
+const R = require$$0
+const nil = R.isNil
+class DoubleLinked {
+  constructor(index=0,past=null,next=null) {
+    this.past = past
+    this.next = next
+    this.index = index
+    this.lens = R.lensIndex(index)
+  }
+  get getter() {
+    return R.view(this.lens)
+  }
+  static getter(e,data) {
+    return R.view(e.lens,data)
+  }
+  setNext(next) {
+    this.next = next
+  }
+  get isFirst() {
+    return nil(this.past)
+  }
+  get isLast() {
+    return nil(this.next)
+  }
+  static first() {
+    return new DoubleLinked()
+  }
+}
+class DLinkedList {
+  constructor(arr) {
+    this.source = arr
+    this.first = null
+    this.last = null
+    this.length = 0
+  }
+  inc() {
+    return this.length++
+  }
+  dec() {
+    return this.length--
+  }
+  static create(arr) {
+    let list = new DLinkedList(arr)
+    const length = R.length(arr)
+    let i=0
+    while (i<length) {
+      list.inc()
+      if (i===0) {
+        list.first = DoubleLinked.first()
+        list.last = list.first
+      } else {
+        let e = new DoubleLinked(i,list.last)
+        list.last.setNext(e)
+        list.last = e
+      }
+      i++
+    }
+    return list
+  }
+  static remove(list,e) {
+    if (e.isFirst&&e.isLast) {
+      list.first = null
+      list.last = null
+    } else if (!e.isFirst&&!e.isLast) {
+      e.past.next = e.next
+      e.next.past = e.past
+    } else if (e.isFirst) {
+      list.first = e.next
+      list.first.past = null
+    } else if(e.isLast) {
+      list.last = e.past
+      list.last.next = null
+    }
+    list.dec()
+  }
+  *[Symbol.iterator]() {
+    yield this.first
+    let next = this.first.next
+    while(!nil(next)) {
+      yield next
+      next = next.next
+    }
+  }
+}
+module.exports = DLinkedList
+});
+
+var treeError = createCommonjsModule(function (module) {
+const R = require$$0
+const util$$1 = util
+const S = util$$1.S
+const P = util$$1.P
+const tool = tooling
+const eq = tool.equals
+const DlinkList = doubleLinked
+const Err = error
+const chain = func=>e=>e.chain(func)
+function testing(rejectFunc) {
+  const testPack = tests => P(R.juxt(util$$1.arrayify(tests)),R.all(R.equals(true)))
+  const curryTestPack = tests=>e=>data=>testPack(tests)(e,data)
+  const over = (_list,morpher)=>node=>R.over(node.lens,morpher(_list,node))
+  const onCatch = (tester,overrider)=>node=>R.when(tester(node),overrider(node))
+  const checkNode = tester=>morpher=>_list=>{
+    const overrider = over(_list,morpher)
+    const catcher = onCatch(tester,overrider)
+    return (_data,node)=>catcher(node)(_data)
+  }
+  const testsPipe = P(curryTestPack,checkNode)
+  const recompose = (rejectFunc,testlist)=>P(rejectFunc,testsPipe(testlist))
+  return (testName,testlist) => recompose(rejectFunc,testlist)(testName)
+}
+function prepareValidation(testKit) {
+  const leftErrorGen = errorText=>o=>S.Left({error:errorText,data:o})
+  const errorGen = rejectFunc=>P(leftErrorGen,chain,rejectFunc)
+  const changeRejected = (onError)=>(_list,listNode)=>e=>{
+    DlinkList.remove(_list,listNode)
+    return onError(e)
+  }
+  const testingFactory = P(errorGen,testing)(changeRejected)
+  const testingRun = P(R.toPairs,R.map(e=>testingFactory(...e)),P)
+  return testingRun(testKit)
+}
+function iterduce(testFunc) {
+  return function(data) {
+    let list = DlinkList.create(data)
+    return errorSummary(R.reduce(testFunc(list),data,list))
+  }
+}
+function errorSummary(data) {
+  Err.Throw.Lexic(data)
+  return S.rights(data)
+}
+const isInsertCatTest = (e,_data)=>e.getter(_data).chain(eq.type.number.string.type.any.arg)
+const siblingTest = (e,_data)=>e.isFirst
+const testKit = {
+  siblingFilter:[isInsertCatTest,siblingTest]
+}
+let project = prepareValidation(testKit)
+module.exports = iterduce(project)
+});
+
 var tree = createCommonjsModule(function (module) {
 const R = require$$0
 const util$$1 = util
@@ -527,7 +754,9 @@ const types = syntax.types
 const tool = tooling
 const eq = tool.equals
 const Print = print
-const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(tag+' '+i)(o)))
+const findErrors = treeError
+const leftRight = o=>o.isRight?'R':'L'
+const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(R.join(' ')([tag,i,leftRight(o)]))(o.value)))
 const eitherToMaybe = R.map(S.eitherToMaybe)
 function indexation(data) {
   const indexPipe = (e,i)=>S.lift(R.assoc('index',i))(e)
@@ -556,9 +785,9 @@ function stageHeader(data) {
   props.data = res(data)
   return props
 }
-function headSplitter(isMaster,onMaster,changeLast) {
+function headSplitter(isMaster,onMaster,push) {
   const lensLast = RP().length.dec.lensIndex.run
-  const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
+  const onEmpty = P(HeadList.create,Lexeme.Pipe,R.append)
   const onSlave =
     e=>list=>
         R.ifElse(
@@ -566,27 +795,27 @@ function headSplitter(isMaster,onMaster,changeLast) {
           onEmpty(e),
           R.over(
             lensLast(list),
-            changeLast(e)
+            push(e)
           ))(list)
   const tranducer = R.map(R.ifElse(isMaster,onMaster,onSlave))
   return R.transduce(tranducer,(acc,val)=>val(acc))
 }
 function intoAtomics(data) {
-  const changeLast = e=>P(util$$1.arrayify,R.append(e.value))
+  const push = e=>P(util$$1.arrayify,R.append(e.value))
   const isMaster = P(prop.val,eq.type.R.op.context)
   const onMaster = P(prop.val,R.of,R.append)
-  const tr = headSplitter(isMaster,onMaster,changeLast)
+  const tr = headSplitter(isMaster,onMaster,push)
   return tr([],data)
 }
 function intoPipes(data) {
-  const changeLast = e=>hList=>hList.append(e)
+  const push = e=>hList=>hList.append(e)
   const pipeSymbols = eq.op
     .forwardpipe
     .middlepipe
     .backpipe
   const isMaster = R.both(HeadList.isList,P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
-  const tr = headSplitter(isMaster,onMaster,changeLast)
+  const tr = headSplitter(isMaster,onMaster,push)
   return tr([],data)
 }
 function checkReplace(data) {
@@ -606,18 +835,21 @@ function checkReplace(data) {
   const reducer = (acc,val)=>doCheckReplace(...val)(acc)
   return R.reduce(reducer,data,replacers)
 }
+const toMaybes = R.map(S.Maybe.of)
 const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
 function lexemize(data) {
   const whenHeadIsDo = (cond,action)=>R.when(P(prop.head,cond),action)
   const detectAtomic = whenHeadIsDo(eq.type.R.context , Lexeme.AtomicFunc)
   const detectExpr   = whenHeadIsDo(eq.type.op , Lexeme.Expression)
   const detecting = P(
-    e=>new HeadList(e),
-    detectAtomic,
-    detectExpr,taplog('detectExpr ')
+    HeadList.create,
+    detectExpr,taplog('detectExpr'),
+    detectAtomic,taplog('detectAtomic')
     )
   const lexemizing = P(
-    S.lift(checkReplace),tapArr('checkReplace'),
+    S.lift(checkReplace),tapArr('checkRepl'),
+    findErrors,tapArr('findErrors'),
+    toMaybes,
     intoAtomics,pipelog('intoAtomics'),
     R.map(detecting))
   return lexemizing(data)
@@ -629,9 +861,8 @@ function addArgName(data) {
 }
 function getSyntaxTree(data) {
   const treePipe = P(
-    indexation,tapArr('indexation'),
-    addArgName,tapArr('argName'),
-    eitherToMaybe,
+    indexation,tapArr('indexate '),
+    addArgName,tapArr('argName  '),
     lexemize,
     intoPipes
     )
@@ -639,6 +870,20 @@ function getSyntaxTree(data) {
   return setTree(data)
 }
 module.exports = getSyntaxTree
+});
+
+var stack = createCommonjsModule(function (module) {
+const R = require$$0
+const HeadList = headList
+function Stack() {
+  const appendTo = obj=>e=>obj.append(e)
+  this.value = []
+  this.push = obj=>this.value.push(appendTo(obj))
+  this.pushLast = result=>this.push(HeadList.lastR(result,true))
+  this.pop = ()=>this.value.pop()
+  this.addToLast = val=>R.last(this.value)(val)
+}
+module.exports = ()=>new Stack()
 });
 
 var convolve = createCommonjsModule(function (module) {
@@ -649,6 +894,7 @@ const P = util$$1.P
 const log = util$$1.log('tree')
 const pipelog = util$$1.pipelog('tree')
 const HeadList = headList
+const Stack = stack
 const Lexeme = lexeme
 const tool = tooling
 const eqOp = tool.eq.op
@@ -682,23 +928,15 @@ const switches = [
   [NaN,0,1,NaN,0]
 ]
 function optimise(data) {
-  const exprToPipe = R.when(Lexeme.its.expr,P(util$$1.prop.tail,e=>new HeadList(e), Lexeme.Pipe))
+  const exprToPipe = R.when(Lexeme.its.expr,P(util$$1.prop.tail,HeadList.create, Lexeme.Pipe))
   const singlePipeToAtomic = R.when(R.both(Lexeme.its.pipe,P(HeadList.hasTail,R.not)),util$$1.prop.head)
   return P(exprToPipe,singlePipeToAtomic)(data)
-}
-function Stack() {
-  const appendTo = obj=>e=>obj.append(e)
-  this.value = []
-  this.push = obj=>this.value.push(appendTo(obj))
-  this.pushLast = result=>this.push(HeadList.lastR(result,true))
-  this.pop = ()=>this.value.pop()
-  this.addToLast = val=>R.last(this.value)(val)
 }
 function convolve(dataPack) {
   let data = dataPack.tree
   if (!R.is(Array,data)) return S.Left('No array recieved')
   let result = HeadList.emptyList()
-  let stack = new Stack()
+  let stack$$1 = Stack()
   let state = states.empty
   let i = 0,
       len = data.length
@@ -708,14 +946,14 @@ function convolve(dataPack) {
     let doAction = switches[state][nextState]
     switch(doAction) {
       case actions.child:
-        stack.pushLast(result)
+        stack$$1.pushLast(result)
         break
       case actions.parent:
-        stack.pop()
+        stack$$1.pop()
         break
     }
     state = nextState
-    stack.addToLast(optimise(e))
+    stack$$1.addToLast(optimise(e))
   }
   dataPack.tree = P(Lexeme.Pipe,optimise)(result)
   return dataPack
@@ -780,6 +1018,7 @@ const eq = tooling.equals
 const HeadList = headList
 const types = syntax.types
 const Lexeme = lexeme
+const Err = error
 const chain = func=>o=>o.chain(func)
 class IndexMap {
   static get indexation() {
@@ -803,10 +1042,13 @@ class IndexMap {
     return P(prop.val,has)
   }
 }
+const errorCheck = R.unless(R.isEmpty,Err.Throw.Args)
+const callNotFunc = (token,userArg) => eq.type.context(token)&&!R.is(Function,userArg)
 function fillUserData(userData,dataPack) {
   let indexMap = new IndexMap(dataPack.context||[])
   const isArgOrCont = eq.type.arg.context
   const morpher = HeadList.cyclic(modify)
+  let errors = new Set()
   dataPack.tree = morpher(dataPack.tree)
   function modify(e) {
     if (!isArgOrCont(e)) return e
@@ -815,10 +1057,13 @@ function fillUserData(userData,dataPack) {
       log('ERRRROR!')(e)
     let argIndex = indexMap.get(e.value)
     let getArg = userData[argIndex]
-    log('refs')(e.type,argIndex,getArg)
+    if (callNotFunc(e,getArg))
+      errors.add({argument:e.value,value:getArg})
+    log('refs')(e.type,e.value,argIndex,getArg)
     e.value = getArg
     return e
   }
+  errorCheck([...errors.values()])
   return dataPack
 }
 module.exports = {fillUserData}
@@ -921,8 +1166,8 @@ function say$$1(data) {
     ,Speak(data)
     )(data)
 }
-const pureExample = "indexes data sright :: head prop 'index' concat @data sright"
-const simple = "when <| == 1 not <|> + 10 |> + 100"
+const pureExample = "indexes data sright :: head prop 'index' concat @data append 42 sright"
+const simple = "when [ == 1 not , + 10 ] + 100"
 log('example')(pureExample)
 let word = say$$1(pureExample)
 let indexes = [{index:[1,3]},{index:[0,1,2,3]},0]

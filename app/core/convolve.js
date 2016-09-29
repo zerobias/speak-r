@@ -8,6 +8,7 @@ const log = util.log('tree')
 const pipelog = util.pipelog('tree')
 
 const HeadList = require('../model/head-list')
+const Stack = require('../model/stack')
 const Lexeme = require('../model/lexeme')
 
 const tool = require('../lang/tooling')
@@ -45,24 +46,16 @@ const switches = [
   [NaN,0,1,NaN,0]  // close
 ]
 function optimise(data) {
-  const exprToPipe = R.when(Lexeme.its.expr,P(util.prop.tail,e=>new HeadList(e), Lexeme.Pipe))
+  const exprToPipe = R.when(Lexeme.its.expr,P(util.prop.tail,HeadList.create, Lexeme.Pipe))
   const singlePipeToAtomic = R.when(R.both(Lexeme.its.pipe,P(HeadList.hasTail,R.not)),util.prop.head)
   return P(exprToPipe,singlePipeToAtomic)(data)
-}
-function Stack() {
-  const appendTo = obj=>e=>obj.append(e)
-  this.value = []
-  this.push = obj=>this.value.push(appendTo(obj))
-  this.pushLast = result=>this.push(HeadList.lastR(result,true))
-  this.pop = ()=>this.value.pop()
-  this.addToLast = val=>R.last(this.value)(val)
 }
 
 function convolve(dataPack) {
   let data = dataPack.tree
   if (!R.is(Array,data)) return S.Left('No array recieved')
   let result = HeadList.emptyList()
-  let stack = new Stack()
+  let stack = Stack()
   let state = states.empty
   let i = 0,
       len = data.length

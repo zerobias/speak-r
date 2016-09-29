@@ -4,6 +4,7 @@ const syntax = require('../lang/syntax')
 
 const Token = require('../model/token')
 const util = require('../util')
+
 const S = util.S
 const P = util.P
 
@@ -48,6 +49,10 @@ const isArg = TokenFabric(Token.Arg, argValidation, R.tail)
 
 const preprocess = S.lift(R.when(isString, R.trim))
 const postprocess = R.identity
+// R.tap(e=>{
+//   if (e.isLeft)
+//     throw Err.Throw.Token(e.value)
+// })
 module.exports = {
   isQuote: quoteProcessor(),
   isType: typesProcessor(),

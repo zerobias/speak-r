@@ -2,37 +2,37 @@ const R = require('ramda')
 
 const util = require('../util')
 const S = util.S
-
 const P = util.P
+const isof = util.isof
 
 class HeadList {
-  constructor(rawList, head) {
-    if (!R.is(Array,rawList)||R.isEmpty(rawList)) return S.Left('No array recieved')
-    if (R.isNil(head)) {
-      this.head = R.head(rawList)
-      this.tail = R.tail(rawList)
-    } else {
-      this.head = head
-      this.tail = rawList||[]
-    }
-    this[Symbol.iterator] = function* () {
-      yield this.head
-      for (let e of this.tail)
-        yield e
-    }
+  constructor(rawData) {
+    const list = util.arrayify(rawData)
+    this.head = R.head(list) || {}
+    this.tail = R.tail(list)
   }
   get toArray() {
     return R.prepend(this.head,this.tail)
   }
+  *[Symbol.iterator]() {
+    yield this.head
+    for (let e of this.tail)
+      yield e
+  }
   get length() {
-    return R.defaultTo(0,this.tail.length)+R.isEmpty(this.head)?0:1
+    return R.converge(R.add,[
+      R.pathOr(0,['tail','length']),
+      P(R.prop('head'),R.isNil,e=>e ? 0 : 1)])
   }
   append(e) {
-    if (R.isEmpty(this.tail)&&R.isEmpty(this.head))
+    if (HeadList.isEmpty(this))
       this.head = e
     else
       this.tail.push(e)
     return this
+  }
+  static create(e) {
+    return new HeadList(e)
   }
   static get prepend() {
     return R.curry((val,list)=>{
@@ -50,8 +50,12 @@ class HeadList {
       return list
     }
   }
-
-  static hasTail(list) {return R.has('tail',list)&&!R.isEmpty(list.tail)}
+  static isEmpty(list) {
+    return !HeadList.hasTail(list)&&R.isEmpty(list.head)
+  }
+  static get hasTail() {
+    return R.both(R.has('tail'),P(R.prop('tail'),isof.Full))
+  }
   static last(list) {
     return HeadList.hasTail(list)
       ? R.last(list.tail)
@@ -64,7 +68,7 @@ class HeadList {
     return R.until(isStrict?cond:notHas,HeadList.last)(list)
   }
   static emptyList() {
-    return new HeadList([{}])
+    return new HeadList()
   }
   static isList(list) {
     return R.has('head',list)

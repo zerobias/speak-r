@@ -17,7 +17,10 @@ const tool = require('../lang/tooling')
 const eq = tool.equals
 const Print = require('../print')
 
-const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(tag+' '+i)(o)))
+const findErrors = require('./tree-error')
+
+const leftRight = o=>o.isRight?'R':'L'
+const tapArr = tag=> R.tap(e=>e.map((o,i)=>pipelog(R.join(' ')([tag,i,leftRight(o)]))(o.value)))
 // const example = "tokens :: Array prop 'type' indexOf _ 'tokens' equals -1 not"
 // const exampleNoDef = "prop 'type' indexOf _ 'tokens' equals -1 not"
 //const onChecking = P(  R.prepend(  R.take(2) , R.equals('|>') ) , R.apply(R.ifElse) )
@@ -58,9 +61,9 @@ function stageHeader(data) {
   return props
 }
 
-function headSplitter(isMaster,onMaster,changeLast) {
+function headSplitter(isMaster,onMaster,push) {
   const lensLast = RP().length.dec.lensIndex.run
-  const onEmpty = e=>R.append(Lexeme.Pipe(new HeadList([e])))
+  const onEmpty = P(HeadList.create,Lexeme.Pipe,R.append)
   const onSlave =
     e=>list=>
         R.ifElse(
@@ -68,21 +71,21 @@ function headSplitter(isMaster,onMaster,changeLast) {
           onEmpty(e),
           R.over(
             lensLast(list),
-            changeLast(e)
+            push(e)
           ))(list)
   const tranducer = R.map(R.ifElse(isMaster,onMaster,onSlave))
   return R.transduce(tranducer,(acc,val)=>val(acc))
 }
 function intoAtomics(data) {
-  const changeLast = e=>P(util.arrayify,R.append(e.value))
+  const push = e=>P(util.arrayify,R.append(e.value))
   const isMaster = P(prop.val,eq.type.R.op.context)
   const onMaster = P(prop.val,R.of,R.append)
 
-  const tr = headSplitter(isMaster,onMaster,changeLast)
+  const tr = headSplitter(isMaster,onMaster,push)
   return tr([],data)
 }
 function intoPipes(data) {
-  const changeLast = e=>hList=>hList.append(e)
+  const push = e=>hList=>hList.append(e)
   const pipeSymbols = eq.op
     .forwardpipe
     .middlepipe
@@ -90,7 +93,7 @@ function intoPipes(data) {
   const isMaster = R.both(HeadList.isList,P(prop.head, pipeSymbols))
   const onMaster = P(R.identity,R.append)
 
-  const tr = headSplitter(isMaster,onMaster,changeLast)
+  const tr = headSplitter(isMaster,onMaster,push)
   return tr([],data)
 }
 
@@ -111,18 +114,25 @@ function checkReplace(data) {
   const reducer = (acc,val)=>doCheckReplace(...val)(acc)
   return R.reduce(reducer,data,replacers)
 }
+
+const toMaybes = R.map(S.Maybe.of)
 const taplog = tag=>R.tap(e=>Print.headList(tag,e,-1))
 function lexemize(data) {
   const whenHeadIsDo = (cond,action)=>R.when(P(prop.head,cond),action)
   const detectAtomic = whenHeadIsDo(eq.type.R.context , Lexeme.AtomicFunc)
   const detectExpr   = whenHeadIsDo(eq.type.op , Lexeme.Expression)
   const detecting = P(
-    e=>new HeadList(e),
-    detectAtomic,
-    detectExpr,taplog('detectExpr ')
+    HeadList.create,
+    detectExpr,taplog('detectExpr'),
+    detectAtomic,taplog('detectAtomic')
+
     )
   const lexemizing = P(
-    S.lift(checkReplace),tapArr('checkReplace'),
+
+    S.lift(checkReplace),tapArr('checkRepl'),
+    findErrors,tapArr('findErrors'),
+    // eitherToMaybe,
+    toMaybes,
     intoAtomics,pipelog('intoAtomics'),
     R.map(detecting))
   return lexemizing(data)
@@ -134,9 +144,9 @@ function addArgName(data) {
 }
 function getSyntaxTree(data) {
   const treePipe = P(
-    indexation,tapArr('indexation'),
-    addArgName,tapArr('argName'),
-    eitherToMaybe,
+    indexation,tapArr('indexate '),
+    addArgName,tapArr('argName  '),
+
     lexemize,//tapArr('lexemize'),
     intoPipes
     )

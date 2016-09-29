@@ -1,6 +1,7 @@
 const R = require('ramda')
 
 const lexemeTypes = require('../lang/syntax').lexemeTypes
+const HeadList = require('./head-list')
 
 class ILexeme {
   constructor(typename,obj) {
@@ -10,8 +11,9 @@ class ILexeme {
   }
 }
 class Lexeme {
-  static Pipe(tokensHList) {
-    return new ILexeme(lexemeTypes.pipe,tokensHList)
+  static Pipe(tokensList) {
+    // const list = HeadList.create(tokensList)
+    return new ILexeme(lexemeTypes.pipe,tokensList)
   }
   static AtomicFunc(tokensHList) {
     return new ILexeme(lexemeTypes.atomic,tokensHList)
