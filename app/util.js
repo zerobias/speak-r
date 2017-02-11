@@ -1,4 +1,4 @@
-const R = require('ramda')
+const { is, isNil, isEmpty, tap, pipe, defaultTo, unless, of, flip, contains, map, prop, complement } = require('ramda')
 const debug = require('debug')
 
 const RP = require('./model/ramda-piped')
@@ -7,34 +7,36 @@ const pipefy = require('./pipefy')
 const P = pipefy
 
 const isof = {
-  String: R.is(String),
-  Func:   R.is(Function),
-  Array:  R.is(Array),
-  Nil:    R.isNil,
-  Real:   e=>!R.isNil(e),
-  Empty:  R.isEmpty,
-  Full:   e=>!R.isEmpty(e)
+  String: is(String),
+  Func  : is(Function),
+  Array : is(Array),
+  Nil   : isNil,
+  Real  : complement(isNil),
+  Empty : isEmpty,
+  Full  : complement(isEmpty)
 }
 
-const tagvalue = (tag,mess)=>isof.Nil(mess) ? tag : [tag,mess].join(':  ')
-const log = tag=>mess=>debug(tagvalue(tag,mess))
-const pipelog = tag=>mess=>R.tap(log(tag)(mess))
+const tagvalue = (tag, mess) => isof.Nil(mess)
+  ? tag
+  : [tag, mess].join(':  ')
+const log = tag => mess => debug(tagvalue(tag, mess))
+const pipelog = tag => mess => tap(log(tag)(mess))
 
-const arrayify = R.pipe(R.defaultTo([]),R.unless(isof.Array,R.of))
+const arrayify = pipe(defaultTo([]), unless(isof.Array, of))
 
-// const P = (...pipes)=>R.apply(R.pipe,R.filter(isof.Func,pipes))
-
-
-const isContainOrEq = P(arrayify,R.flip(R.contains))
+// const P = (...pipes)=>apply(pipe,filter(isof.Func,pipes))
 
 
-const {create, env} = require('sanctuary')
+const isContainOrEq = P(arrayify, flip(contains))
+
+
+const { create, env } = require('sanctuary')
 const checkTypes = false//process.env.NODE_ENV !== 'production';
-const S = create({checkTypes: checkTypes, env: env})
+const S = create({ checkTypes: checkTypes, env: env })
 
-const prop = R.map(R.prop,{
+const syntaxProp = map(prop, {
   type: 'type',
-  val:  'value',
+  val : 'value',
   head: 'head',
   tail: 'tail',
   data: 'data'
@@ -43,5 +45,5 @@ const prop = R.map(R.prop,{
 const isString = isof.String
 
 module.exports = {
-  pipelog,log,isString,arrayify,P,isof,isContainOrEq,prop,RP,S
+  pipelog, log, isString, arrayify, P, isof, isContainOrEq, prop: syntaxProp, RP, S
 }

@@ -5,11 +5,13 @@ const fab = require('./fabric')
 const splitter = require('./splitter')
 
 const util = require('../util')
+const P = util.P
 const S = util.S
+const Err = require('../model/error')
 
 const pipelog = util.pipelog('preproc')
 const singleWordParsing =
-  R.pipe(
+  P(
     fab.preprocess,
     pipelog('->isQuote'),
     fab.isQuote,
@@ -25,20 +27,20 @@ const singleWordParsing =
     fab.isContext,
     pipelog('->postprocess'),
     fab.postprocess)
+const err = R.unless(util.isString, () => { throw new Error('`keywords` should be String') })
+const beforeSplit = P(
+  err,
+  R.split(' '),
+  R.reject(R.isEmpty))
 function splitKeywords(data) {
-  const err = R.unless(util.isString, () => { throw new Error('`keywords` should be String'); })
-  const beforeSplit = R.pipe(
-    err,
-    R.split(' '),
-    R.reject(R.isEmpty))
-  const sSort = R.map(R.ifElse(R.is(Object),S.Right,S.Left))
-  const _drops = (a,b)=>R.allPass([
-    R.propEq('type','operator'),
-    R.propEq('obj',','),
-    R.eqProps('obj',R.__,b)
+  const sSort = R.map(R.ifElse(R.is(Object), S.Right, S.Left))
+  const _drops = (a, b) => R.allPass([
+    R.propEq('type', 'operator'),
+    R.propEq('obj', ','),
+    R.eqProps('obj', R.__, b)
   ])(a)
   const drops = R.dropRepeatsWith(_drops)
-  let un = R.unary(R.pipe(
+  const un = P(
     beforeSplit,
     splitter.exec,
     sSort,
@@ -46,9 +48,10 @@ function splitKeywords(data) {
 
     R.map(singleWordParsing),
     drops
-  ))
-  fab
-  return un(data)
+  )
+  const splitted = un(data)
+  Err.Throw.Token(splitted)
+  return splitted
 }
 
 

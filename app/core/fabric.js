@@ -4,6 +4,7 @@ const syntax = require('../lang/syntax')
 
 const Token = require('../model/token')
 const util = require('../util')
+
 const S = util.S
 const P = util.P
 
@@ -16,20 +17,14 @@ function TokenFabric(tokenType, condition, transformation) {
   const appendArray = R.flip(R.concat)
   const addSteps = appendArray([tokenType, S.Right])
   const transformUntouched = P(
-    R.tap(e=>{
-      R
-      util
-      //console.log('step 0',e)
-      return e
-    }),
     util.arrayify,
     addSteps,
-    e=>util.P(...e),//TODO implement this feature in P
-    e=>S.either(e, R.identity))
+    P,
+    e => S.either(e, R.identity))
   return R.when(onCondition(condition), transformUntouched(transformation))
 }
 
-const quoteProcessor = function () {
+const quoteProcessor = function() {
   const isQuote = R.anyPass(R.map(R.equals, syntax.quotes))
   const isQuoted = R.allPass([P(R.head, isQuote), P(R.last, isQuote)])
   const removeQuotes = P(R.init, R.tail)
@@ -49,14 +44,18 @@ const vendorProcessor = () => {
 }
 const contextValidation = str => P(R.match(/\D\w+/), R.head, R.equals(str))(str)
 const isContext = TokenFabric(Token.Context, contextValidation)
-const argValidation = R.both(P(R.head,R.equals('@')),P(R.tail,contextValidation))
+const argValidation = R.both(P(R.head, R.equals('@')), P(R.tail, contextValidation))
 const isArg = TokenFabric(Token.Arg, argValidation, R.tail)
 
 const preprocess = S.lift(R.when(isString, R.trim))
 const postprocess = R.identity
+// R.tap(e=>{
+//   if (e.isLeft)
+//     throw Err.Throw.Token(e.value)
+// })
 module.exports = {
-  isQuote: quoteProcessor(),
-  isType: typesProcessor(),
+  isQuote : quoteProcessor(),
+  isType  : typesProcessor(),
   isVendor: vendorProcessor(),
   isNumber,
   isContext,
