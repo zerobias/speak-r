@@ -36,7 +36,7 @@ All these ways are identical.
 ```javascript
 const Say = require('speak-r')
 
-let fn = Say`inc of`
+let fn = Say(`inc of`)
     fn = R.pipe( R.inc, R.of )
     fn = num => R.of( R.inc(num) )
 
@@ -49,13 +49,15 @@ fn(0)
 Numbers are written as is, strings are enclosed in single quotes.
 Based on the fact that ordinary variables are non-callable, every string, number or argument refers to the nearest preceding function.
 
+Type tokens (Array, String...) also can be written as is.
+
 ```javascript
-let fn = Say`add 10`
+let fn = Say(`add 10`)
 
 fn(0)
 // => 10
 
-fn = Say`objOf 'name'`
+fn = Say(`objOf 'name'`)
 
 fn('Anna')
 // => { name: 'Anna' }
@@ -64,7 +66,7 @@ fn('Anna')
 A function can be followed by any number of arguments.
 
 ```javascript
-const fn = Say`assoc 'age' 21`
+const fn = Say(`assoc 'age' 21`)
 
 fn({ name: 'Anna' })
 // => { name: 'Anna', age: 21 }
@@ -73,7 +75,7 @@ fn({ name: 'Anna' })
 Functions arguments are automatically grouped, so you can safely write functions successively.
 
 ```javascript
-const isAdult = Say`prop 'age' lt 18`
+const isAdult = Say(`prop 'age' lt 18`)
 
 isAdult({ name: 'Anna', age: 21 })
 // => true
@@ -92,10 +94,61 @@ const getHash = user => {
                 // guaranted to be random
   return user
 }
-const setBalance = Say`user money hashFunc :: assoc 'balance' @money hashFunc`
+const setBalance = Say(`user money hashFunc :: assoc 'balance' @money hashFunc`)
 
 setBalance({ name: 'Anna', age: 21 }, 100, getHash)
 // => { name: 'Anna', age: 21, balance: 100, hash: 4 }
 ```
+
+### Nested
+
+>Now broken.
+
+Nested pipes
+
+```javascript
+Say(`when [ is Array, append 'new element' ]`)
+// => { name: 'Anna', age: 21, balance: 100, hash: 4 }
+```
+
+
+Other
+---
+
+`set DEBUG=*` for watching tree parsing
+
+Basic syntax is defined in app/lang/syntax.js
+
+Grammar rules are written as finite state machine in app/core/convolve.js
+
+```javascript
+
+const states = {
+  empty: 0,
+  pipe : 1,
+  open : 2,
+  mid  : 3,
+  close: 4
+}
+const actions = {
+  next  : 0,
+  child : 1,
+  parent: -1,
+  error : NaN
+}
+
+const switches = [
+  [NaN, 1, 1, NaN, 1], // empty
+  [NaN, 0, 1, NaN, 0], // pipe
+  [NaN, -1, 1, 0, -1], // open
+  [NaN, -1, 1, 0, -1], // mid
+  [NaN, 0, 1, NaN, 0]  // close
+]
+
+```
+This is the transition matrix from state to state
+Each language token can affect the current position in the stack (opening bracket - increases, closing bracket - decreases, the function leaves unchanged). transition matrix receives the current state and the type of token, then returns the new state of the translator.
+
+If someone is interested, I can describe this part more
 
 [@leanpipe]: https://iamstarkov.com/fp-js-workshop/02-practical-intro/

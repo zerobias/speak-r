@@ -3,7 +3,7 @@ const R = require('ramda')
 const preproc = require('./core/string-preprocess')
 const getTree = require('./core/tree')
 const convolve = require('./core/convolve')
-const Speak = require('./core/say')
+const Speak = require('./core')
 
 const util = require('./util')
 const P = util.P
@@ -31,18 +31,18 @@ function say(data) {
 }
 
 const pureExample = "indexes data sright :: head prop 'index' concat @data append 42 sright"
-const simple = 'when [ == 1 not , + 10 ] + 100'
+// const simple = 'when [ == 1 not , + 10 ] + 100'
 // const pure = P( R.when(P(R.equals(1),R.not),R.add(10)),R.add(100))
 
 // let convolved = say(pureExample)
 log('example')(pureExample)
 
 // Print.headList('conv',convolved,-1)
-const word = say(pureExample)
 const indexes = [{ index: [1, 3] }, { index: [0, 1, 2, 3] }, 0]
 const dat = [0, 5, 20, 30, 40, 50]
 const sright = R.objOf('result')
 // let flipap = R.flip(R.append)
+const word = say(pureExample)
 const res = word(indexes, dat, sright)
 // let res = word(1)
 

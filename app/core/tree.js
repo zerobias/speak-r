@@ -39,26 +39,43 @@ function indexation(data) {
 
 const valEq = R.propEq('value')
 const check =func => e => R.both(S.isRight, valEq(true))(S.lift(func, e))
-function stageHeader(data) {
-  const eiSplitOn = func => P(R.splitWhen(check(func)), R.adjust(R.tail, 1))
 
-  const split = {
-    context: eiSplitOn(eq.op.doubledots),
-    define : eiSplitOn(eq.op.define)
+const eiSplitOn = func => P(
+  R.splitWhen(check(func)),
+  R.adjust(R.tail, 1))
+
+const splitOn = {
+  context: eiSplitOn(eq.op.doubledots),
+  define : eiSplitOn(eq.op.define)
+}
+
+const writeField = (field, obj) => res => {
+  if (R.isEmpty(res[1])) {
+    obj[field] = false
+    return res[0]
+  } else {
+    obj[field] = S.rights(res[0])
+    return res[1]
   }
-  const writeField = (field, obj) => res => {
-    if (R.isEmpty(res[1])) {
-      obj[field] = false
-      return res[0]
-    } else {
-      obj[field] = S.rights(res[0])
-      return res[1]
-    }
-  }
+}
+
+const defaultContext = [{ type: 'fakeContext', value: 'data' }]
+
+const checkContext = R.when(
+  R.propEq('context', false),
+  R.assoc('context', defaultContext)
+)
+function stageHeader(data) {
+
+
   const props = {}
-  const res = P(split.define, writeField('define', props), split.context, writeField('context', props))
+  const res = P(
+    splitOn.define,
+    writeField('define', props),
+    splitOn.context,
+    writeField('context', props))
   props.data = res(data)
-  return props
+  return checkContext(props)
 }
 
 function headSplitter(isMaster, onMaster, push) {

@@ -23,25 +23,28 @@ Object.defineProperty(Outfall.prototype, 'pipe', {
 })
 
 Outfall.prototype.Spout = function(index, isArg = true) {
-  return Spout(this, index, isArg)
+  return new Spout(this, index, isArg)
 }
 
-function Spout(parent, index, isArg) {
-  const spout = Object.create(parent, {
-    data : { get: function() { return parent._data }, enumerable: true },
-    index: { get: function() { return index }, enumerable: true },
-    id   : { get: function() { return parent.id }, enumerable: true },
-    isArg: { value: isArg, enumerable: true }
-  })
-  Object.defineProperty(spout, 'pipe', { value:
-    function() {
-      log('spout pipe')(spout.data[spout.index], spout)
-      if (R.isNil(spout.data)) return null
-      return spout.isArg
-        ? spout.data[spout.index]
-        : spout.data[spout.index] },
-    enumerable: true })
-  return spout
+class Spout {
+  get data() {
+    return this.parent._data
+  }
+  get id() {
+    return this.parent.id
+  }
+  pipe() {
+    log('spout pipe')(this.data[this.index], this)
+    if (R.isNil(this.data)) return null
+    return this.isArg
+      ? this.data[this.index] //TODO WTF
+      : this.data[this.index]
+  }
+  constructor(parent, index, isArg) {
+    this.parent = parent
+    this.index = index
+    this.isArg = isArg
+  }
 }
 
 // let stream = Outfall.gate

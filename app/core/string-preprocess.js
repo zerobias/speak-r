@@ -27,12 +27,12 @@ const singleWordParsing =
     fab.isContext,
     pipelog('->postprocess'),
     fab.postprocess)
+const err = R.unless(util.isString, () => { throw new Error('`keywords` should be String') })
+const beforeSplit = P(
+  err,
+  R.split(' '),
+  R.reject(R.isEmpty))
 function splitKeywords(data) {
-  const err = R.unless(util.isString, () => { throw new Error('`keywords` should be String') })
-  const beforeSplit = P(
-    err,
-    R.split(' '),
-    R.reject(R.isEmpty))
   const sSort = R.map(R.ifElse(R.is(Object), S.Right, S.Left))
   const _drops = (a, b) => R.allPass([
     R.propEq('type', 'operator'),

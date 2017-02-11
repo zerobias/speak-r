@@ -22,8 +22,8 @@
   "author": "Zero Bias",
   "license": "MIT",
   "dependencies": {
-    "debug": "^2.2.0",
-    "ramda": "^0.22.1",
+    "debug": "^2.6.1",
+    "ramda": "^0.23.0",
     "sanctuary": "^0.11.1"
   },
   "devDependencies": {
@@ -37,7 +37,7 @@
     "rollup-plugin-commonjs": "^4.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
     "rollup-plugin-uglify": "^1.0.1",
-    "tap": "^7.1.2",
+    "tap": "^10.1.0",
     "uglify-js": "^2.7.3"
   }
 }

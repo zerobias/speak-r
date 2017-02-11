@@ -42,30 +42,25 @@ function sayAtomic(list) {
     : collectData(list.head)
 }
 
-const contextArgs = P(
-  R.when(R.equals(false), () => []),
-  R.when(
-    util.isof.Empty,
-    R.append({ type: 'fakeContext', value: 'data' })),
-  R.map(util.prop.val))
+const contextArgs = R.map(util.prop.val)
 
-function Runner(dataPack) {
-  const obj = function(...userArgs) {
-    dataPack.gate.pipe(userArgs)
-    const filled = Context.fillUserData(userArgs, dataPack)
-    const render = collectData(filled.tree)
-    return render(...userArgs)
+
+class Runner {
+  get source() {
+    return this.data.source
   }
-  Object.defineProperty(obj, 'data', {
-    value: dataPack
-  })
-  Object.defineProperty(obj, 'source', { get:
-    function() { return obj.data.source }
-  })
-  Object.defineProperty(obj, 'args', { get:
-    function() { return contextArgs(obj.data.context) }
-  })
-  return obj
+  get args() {
+    return contextArgs(this.data.context)
+  }
+  constructor(dataPack) {
+    this.data = dataPack
+    return (...userArgs) => {
+      dataPack.gate.pipe(userArgs)
+      const filled = Context.fillUserData(userArgs, dataPack)
+      const render = collectData(filled.tree)
+      return render(...userArgs)
+    }
+  }
 }
 
 function say(sourceString) {

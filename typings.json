@@ -7,7 +7,5 @@
   "dependencies": {
     "ramda": "registry:npm/ramda#0.21.0+20160531162943"
   },
-  "globalDependencies": {
-    "debug": "registry:dt/debug#0.0.0+20160317120654"
-  }
+  "globalDependencies": {}
 }

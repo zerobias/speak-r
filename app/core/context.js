@@ -1,11 +1,11 @@
-const R = require('ramda')
+const { addIndex, map, useWith, pair, prop, identity, unless } = require('ramda')
 
 const util = require('../util')
 const P = util.P
 const S = util.S
 const log = util.log('tree')
 const pipelog = util.pipelog('tree')
-const prop = util.prop
+const rProp = util.prop
 
 const eq = require('../lang/tooling').equals
 
@@ -15,12 +15,12 @@ const Lexeme = require('../model/lexeme')
 const Err = require('../model/error')
 
 const chain = func => o => o.chain(func)
+
+const indexation = addIndex(map)(useWith(pair, [prop('value'), identity]))
+
 class IndexMap {
-  static get indexation() {
-    return R.addIndex(R.map)((e, i) => R.pair(e.value, i))
-  }
-  constructor(context) {
-    const arr = IndexMap.indexation(context)
+  constructor(context = []) {
+    const arr = indexation(context)
     log('index map')(arr)
     this._map = new Map(arr)
   }
@@ -34,13 +34,13 @@ class IndexMap {
   }
   get hasVal() {
     const has = this.has
-    return P(prop.val, has)
+    return P(rProp.val, has)
   }
 }
-const errorCheck = R.unless(R.isEmpty, Err.Throw.Args)
-const callNotFunc = (token, userArg) => eq.type.context(token)&&!R.is(Function, userArg)
+const errorCheck = unless(util.isof.Empty, Err.Throw.Args)
+const callNotFunc = (token, userArg) => eq.type.context(token)&&!util.isof.Func(userArg)
 function fillUserData(userData, dataPack) {
-  const indexMap = new IndexMap(dataPack.context||[]) //TODO create dataPack.context as empty array
+  const indexMap = new IndexMap(dataPack.context) //TODO create dataPack.context as empty array
   const isArgOrCont = eq.type.arg.context
   const morpher = HeadList.cyclic(modify)
   const errors = new Set()
