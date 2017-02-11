@@ -12,17 +12,17 @@ class HeadList {
     this.tail = R.tail(list)
   }
   get toArray() {
-    return R.prepend(this.head,this.tail)
+    return R.prepend(this.head, this.tail)
   }
-  *[Symbol.iterator]() {
+  * [Symbol.iterator]() {
     yield this.head
-    for (let e of this.tail)
+    for (const e of this.tail)
       yield e
   }
   get length() {
-    return R.converge(R.add,[
-      R.pathOr(0,['tail','length']),
-      P(R.prop('head'),R.isNil,e=>e ? 0 : 1)])
+    return R.converge(R.add, [
+      R.pathOr(0, ['tail', 'length']),
+      P(R.prop('head'), R.isNil, e => e ? 0 : 1)])
   }
   append(e) {
     if (HeadList.isEmpty(this))
@@ -35,7 +35,7 @@ class HeadList {
     return new HeadList(e)
   }
   static get prepend() {
-    return R.curry((val,list)=>{
+    return R.curry((val, list) => {
       list.tail = R.prepend(list.head, list.tail)
       list.head = val
       return list
@@ -43,10 +43,10 @@ class HeadList {
   }
   static cyclic(func) {
     return function(list) {
-      for(let e of list)
+      for (let e of list)
         e = P(R.when(
           HeadList.isList,
-          HeadList.cyclic(func)),func)(e)
+          HeadList.cyclic(func)), func)(e)
       return list
     }
   }
@@ -54,24 +54,24 @@ class HeadList {
     return !HeadList.hasTail(list)&&R.isEmpty(list.head)
   }
   static get hasTail() {
-    return R.both(R.has('tail'),P(R.prop('tail'),isof.Full))
+    return R.both(R.has('tail'), P(R.prop('tail'), isof.Full))
   }
   static last(list) {
     return HeadList.hasTail(list)
       ? R.last(list.tail)
       : list.head
   }
-  static lastR(list,isStrict=false) {
+  static lastR(list, isStrict=false) {
     const _hasTail = R.has('tail')
-    const notHas = P(_hasTail,R.not)
-    const cond = R.either(notHas,P(HeadList.last,notHas))
-    return R.until(isStrict?cond:notHas,HeadList.last)(list)
+    const notHas = P(_hasTail, R.not)
+    const cond = R.either(notHas, P(HeadList.last, notHas))
+    return R.until(isStrict?cond:notHas, HeadList.last)(list)
   }
   static emptyList() {
     return new HeadList()
   }
   static isList(list) {
-    return R.has('head',list)
+    return R.has('head', list)
   }
 }
 

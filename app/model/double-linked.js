@@ -3,7 +3,7 @@ const R = require('ramda')
 const nil = R.isNil
 
 class DoubleLinked {
-  constructor(index=0,past=null,next=null) {
+  constructor(index=0, past=null, next=null) {
     this.past = past
     this.next = next
     this.index = index
@@ -12,8 +12,8 @@ class DoubleLinked {
   get getter() {
     return R.view(this.lens)
   }
-  static getter(e,data) {
-    return R.view(e.lens,data)
+  static getter(e, data) {
+    return R.view(e.lens, data)
   }
   setNext(next) {
     this.next = next
@@ -47,7 +47,7 @@ class DLinkedList {
   //   }
   // }
   static create(arr) {
-    let list = new DLinkedList(arr)
+    const list = new DLinkedList(arr)
     const length = R.length(arr)
     let i=0
     while (i<length) {
@@ -56,7 +56,7 @@ class DLinkedList {
         list.first = DoubleLinked.first()
         list.last = list.first
       } else {
-        let e = new DoubleLinked(i,list.last)
+        const e = new DoubleLinked(i, list.last)
         list.last.setNext(e)
         list.last = e
       }
@@ -64,7 +64,7 @@ class DLinkedList {
     }
     return list
   }
-  static remove(list,e) {
+  static remove(list, e) {
     if (e.isFirst&&e.isLast) {
       list.first = null
       list.last = null
@@ -74,16 +74,16 @@ class DLinkedList {
     } else if (e.isFirst) {
       list.first = e.next
       list.first.past = null
-    } else if(e.isLast) {
+    } else if (e.isLast) {
       list.last = e.past
       list.last.next = null
     }
     list.dec()
   }
-  *[Symbol.iterator]() {
+  * [Symbol.iterator]() {
     yield this.first
     let next = this.first.next
-    while(!nil(next)) {
+    while (!nil(next)) {
       yield next
       next = next.next
     }

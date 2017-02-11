@@ -28,19 +28,19 @@ const singleWordParsing =
     pipelog('->postprocess'),
     fab.postprocess)
 function splitKeywords(data) {
-  const err = R.unless(util.isString, () => { throw new Error('`keywords` should be String'); })
+  const err = R.unless(util.isString, () => { throw new Error('`keywords` should be String') })
   const beforeSplit = P(
     err,
     R.split(' '),
     R.reject(R.isEmpty))
-  const sSort = R.map(R.ifElse(R.is(Object),S.Right,S.Left))
-  const _drops = (a,b)=>R.allPass([
-    R.propEq('type','operator'),
-    R.propEq('obj',','),
-    R.eqProps('obj',R.__,b)
+  const sSort = R.map(R.ifElse(R.is(Object), S.Right, S.Left))
+  const _drops = (a, b) => R.allPass([
+    R.propEq('type', 'operator'),
+    R.propEq('obj', ','),
+    R.eqProps('obj', R.__, b)
   ])(a)
   const drops = R.dropRepeatsWith(_drops)
-  let un = P(
+  const un = P(
     beforeSplit,
     splitter.exec,
     sSort,
@@ -49,7 +49,7 @@ function splitKeywords(data) {
     R.map(singleWordParsing),
     drops
   )
-  let splitted = un(data)
+  const splitted = un(data)
   Err.Throw.Token(splitted)
   return splitted
 }

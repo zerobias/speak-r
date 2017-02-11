@@ -20,11 +20,11 @@ function TokenFabric(tokenType, condition, transformation) {
     util.arrayify,
     addSteps,
     P,
-    e=>S.either(e, R.identity))
+    e => S.either(e, R.identity))
   return R.when(onCondition(condition), transformUntouched(transformation))
 }
 
-const quoteProcessor = function () {
+const quoteProcessor = function() {
   const isQuote = R.anyPass(R.map(R.equals, syntax.quotes))
   const isQuoted = R.allPass([P(R.head, isQuote), P(R.last, isQuote)])
   const removeQuotes = P(R.init, R.tail)
@@ -44,7 +44,7 @@ const vendorProcessor = () => {
 }
 const contextValidation = str => P(R.match(/\D\w+/), R.head, R.equals(str))(str)
 const isContext = TokenFabric(Token.Context, contextValidation)
-const argValidation = R.both(P(R.head,R.equals('@')),P(R.tail,contextValidation))
+const argValidation = R.both(P(R.head, R.equals('@')), P(R.tail, contextValidation))
 const isArg = TokenFabric(Token.Arg, argValidation, R.tail)
 
 const preprocess = S.lift(R.when(isString, R.trim))
@@ -54,8 +54,8 @@ const postprocess = R.identity
 //     throw Err.Throw.Token(e.value)
 // })
 module.exports = {
-  isQuote: quoteProcessor(),
-  isType: typesProcessor(),
+  isQuote : quoteProcessor(),
+  isType  : typesProcessor(),
   isVendor: vendorProcessor(),
   isNumber,
   isContext,

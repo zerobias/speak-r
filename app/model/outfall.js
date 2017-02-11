@@ -10,11 +10,11 @@ function Outfall() {
   this._data = null
 }
 
-Object.defineProperty(Outfall, 'gate', { get: function () { return new Outfall() } })
+Object.defineProperty(Outfall, 'gate', { get: function() { return new Outfall() } })
 Object.defineProperty(Outfall.prototype, 'pipe', {
-  get: function () {
-    let self = this
-    return function (data) {
+  get: function() {
+    const self = this
+    return function(data) {
       self.updated = true
       self._data = data
       return data[0]
@@ -22,21 +22,21 @@ Object.defineProperty(Outfall.prototype, 'pipe', {
   }
 })
 
-Outfall.prototype.Spout = function (index,isArg = true) {
+Outfall.prototype.Spout = function(index, isArg = true) {
   return Spout(this, index, isArg)
 }
 
-function Spout(parent, index,isArg) {
-  let spout = Object.create(parent, {
-    data: { get: function () { return parent._data }, enumerable: true },
+function Spout(parent, index, isArg) {
+  const spout = Object.create(parent, {
+    data : { get: function() { return parent._data }, enumerable: true },
     index: { get: function() { return index }, enumerable: true },
-    id: { get: function () { return parent.id }, enumerable: true },
+    id   : { get: function() { return parent.id }, enumerable: true },
     isArg: { value: isArg, enumerable: true }
   })
   Object.defineProperty(spout, 'pipe', { value:
-    function () {
-      log('spout pipe')(spout.data[spout.index],spout)
-      if(R.isNil(spout.data)) return null
+    function() {
+      log('spout pipe')(spout.data[spout.index], spout)
+      if (R.isNil(spout.data)) return null
       return spout.isArg
         ? spout.data[spout.index]
         : spout.data[spout.index] },
